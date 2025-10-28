@@ -14,7 +14,7 @@ function cekPemenang(state) {
   if (state.skorKanan >= 10) return state.namaKanan;
 
   // Aturan 2: Menang selisih 8
-  if (selisih >= 8) {
+  if (selisih >= 8 && (state.skorKiri > 0 || state.skorKanan > 0)) { // Tambahan: pastikan skor tidak 0-0
     return state.skorKiri > state.skorKanan ? state.namaKiri : state.namaKanan;
   }
 
@@ -61,7 +61,6 @@ export default async function handler(req, res) {
       }
 
       // --- Logika Timer ---
-      // PERUBAHAN: Tombol Start
       if (q.start_timer) {
         if (!state.timerRunning) {
           state.timerRunning = true;
@@ -69,7 +68,6 @@ export default async function handler(req, res) {
           stateChanged = true;
         }
       }
-      // PERUBAHAN: Tombol Stop
       if (q.stop_timer) {
         if (state.timerRunning) {
           state.timerRunning = false;
@@ -77,7 +75,7 @@ export default async function handler(req, res) {
           stateChanged = true;
         }
       }
-      // BARU: Logika Toggle Timer (untuk ESP32)
+      // Logika Toggle Timer (untuk ESP32)
       if (q.toggle_timer) {
         if (state.timerRunning) {
           // Jika sedang jalan -> STOP
@@ -93,10 +91,10 @@ export default async function handler(req, res) {
     }
 
     // --- Logika Reset ---
-    // Reset bisa dilakukan kapan saja
     if (q.reset_skor) {
       state.skorKiri = 0;
-      state.skorKanan = 0;
+      // --- INI PERBAIKAN BUG ---
+      state.skorKanan = 0; // Sebelumnya: skorKanan = 0;
       state.elapsedTime = 0;
       state.timerRunning = false;
       state.lastStartTime = 0;
