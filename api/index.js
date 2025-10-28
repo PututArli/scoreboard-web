@@ -1,13 +1,28 @@
-// Menggunakan Vercel KV (database) untuk menyimpan state
 import { kv } from '@vercel/kv';
 
-// Nama key untuk database
 const DB_KEY = 'scoreboard_state';
 
-// Handler utama untuk semua request API
+// Fungsi untuk mengecek pemenang
+function cekPemenang(state) {
+  // Jika sudah ada pemenang, tidak perlu dicek lagi
+  if (state.winnerName) return state.winnerName;
+
+  const selisih = Math.abs(state.skorKiri - state.skorKanan);
+
+  // Aturan 1: Menang poin 10
+  if (state.skorKiri >= 10) return state.namaKiri;
+  if (state.skorKanan >= 10) return state.namaKanan;
+
+  // Aturan 2: Menang selisih 8
+  if (selisih >= 8) {
+    return state.skorKiri > state.skorKanan ? state.namaKiri : state.namaKanan;
+  }
+
+  return null; // Tidak ada pemenang
+}
+
 export default async function handler(req, res) {
   try {
-    // 1. Ambil state terakhir dari database, atau buat state baru jika kosong
     let state = await kv.get(DB_KEY);
     if (!state) {
       state = {
@@ -15,65 +30,96 @@ export default async function handler(req, res) {
         skorKanan: 0,
         namaKiri: "PEMAIN 1",
         namaKanan: "PEMAIN 2",
-        timerRunning: false,  // Apakah timer sedang berjalan?
-        elapsedTime: 0,     // Total waktu berjalan (dalam md)
-        lastStartTime: 0    // Waktu kapan terakhir di-play
+        timerRunning: false,
+        elapsedTime: 0,
+        lastStartTime: 0,
+        winnerName: null // Status pemenang baru
       };
     }
 
     const q = req.query;
-    let stateChanged = false; // Tandai jika ada perubahan
+    let stateChanged = false;
 
-    // 2. Logika untuk memproses perintah dari ESP32 atau Web
-    
-    // Skor Kiri
-    if (q.score_kiri) {
-      state.skorKiri += parseInt(q.score_kiri);
-      stateChanged = true;
+    // --- Logika Input ---
+    // Hanya proses jika tidak ada pemenang
+    if (!state.winnerName) {
+      if (q.score_kiri) {
+        state.skorKiri += parseInt(q.score_kiri);
+        stateChanged = true;
+      }
+      if (q.score_kanan) {
+        state.skorKanan += parseInt(q.score_kanan);
+        stateChanged = true;
+      }
+      if (q.nama_kiri) {
+        state.namaKiri = q.nama_kiri;
+        stateChanged = true;
+      }
+      if (q.nama_kanan) {
+        state.namaKanan = q.nama_kanan;
+        stateChanged = true;
+      }
+
+      // --- Logika Timer ---
+      // PERUBAHAN: Tombol Start
+      if (q.start_timer) {
+        if (!state.timerRunning) {
+          state.timerRunning = true;
+          state.lastStartTime = Date.now();
+          stateChanged = true;
+        }
+      }
+      // PERUBAHAN: Tombol Stop
+      if (q.stop_timer) {
+        if (state.timerRunning) {
+          state.timerRunning = false;
+          state.elapsedTime += (Date.now() - state.lastStartTime);
+          stateChanged = true;
+        }
+      }
+      // BARU: Logika Toggle Timer (untuk ESP32)
+      if (q.toggle_timer) {
+        if (state.timerRunning) {
+          // Jika sedang jalan -> STOP
+          state.timerRunning = false;
+          state.elapsedTime += (Date.now() - state.lastStartTime);
+        } else {
+          // Jika sedang mati -> START
+          state.timerRunning = true;
+          state.lastStartTime = Date.now();
+        }
+        stateChanged = true;
+      }
     }
-    // Skor Kanan
-    if (q.score_kanan) {
-      state.skorKanan += parseInt(q.score_kanan);
-      stateChanged = true;
-    }
-    // Reset
-    if (q.reset_kiri || q.reset_skor) {
+
+    // --- Logika Reset ---
+    // Reset bisa dilakukan kapan saja
+    if (q.reset_skor) {
       state.skorKiri = 0;
       state.skorKanan = 0;
       state.elapsedTime = 0;
       state.timerRunning = false;
       state.lastStartTime = 0;
+      state.winnerName = null; // Reset pemenang
       stateChanged = true;
     }
-    // Start Timer
-    if (q.start_timer) {
-      if (!state.timerRunning) { // Hanya start jika sedang tidak jalan
-        state.timerRunning = true;
-        state.lastStartTime = Date.now();
-        stateChanged = true;
-      }
-    }
-    // Stop Timer
-    if (q.stop_timer) {
-      if (state.timerRunning) { // Hanya stop jika sedang jalan
+
+    // --- Cek Pemenang (Setelah update skor) ---
+    const pemenang = cekPemenang(state);
+    if (pemenang && !state.winnerName) {
+      state.winnerName = pemenang;
+      // Otomatis stop timer jika ada pemenang
+      if (state.timerRunning) {
         state.timerRunning = false;
-        // Simpan sisa waktu
         state.elapsedTime += (Date.now() - state.lastStartTime);
-        stateChanged = true;
       }
+      stateChanged = true;
     }
-    // Update Nama
-    if (q.nama_kiri)  { state.namaKiri = q.nama_kiri; stateChanged = true; }
-    if (q.nama_kanan) { state.namaKanan = q.nama_kanan; stateChanged = true; }
 
-
-    // 3. Simpan state baru ke database jika ada perubahan
     if (stateChanged) {
       await kv.set(DB_KEY, state);
     }
 
-    // 4. Kirim state terbaru sebagai balasan
-    // Ini penting agar frontend bisa update
     return res.status(200).json(state);
 
   } catch (error) {
