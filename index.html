@@ -4,7 +4,6 @@
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <title>Scoreboard Tatami</title>
-    <!-- BARU: Ganti font -->
     <link href="https://fonts.googleapis.com/css2?family=Roboto:wght@400;700;900&family=Orbitron:wght@700&display=swap" rel="stylesheet">
     
     <style>
@@ -121,7 +120,8 @@
             align-items: center;
             
             font-family: 'Orbitron', sans-serif;
-            font-size: clamp(6rem, 20vw, 12rem);
+            /* PERBAIKAN BUG ZOOM: Minimum diubah dari 6rem ke 4rem */
+            font-size: clamp(4rem, 20vw, 12rem);
             font-weight: 700;
             color: white;
             text-shadow: 0 4px 10px rgba(0, 0, 0, 0.2);
@@ -258,7 +258,6 @@
                 </div>
             </div>
 
-            <!-- PERBAIKAN BUG ZOOM: 'classs' diubah menjadi 'class' -->
             <div class="vs">VS</div>
 
             <div class="player">
@@ -279,21 +278,24 @@
             <button id="btn-reset" class="control-button">RESET ALL</button>
         </div>
         
-        <!-- Tombol manual di web -->
-        <div class="controls player-controls" style="margin-top: 0.5rem; justify-content: space-between; max-width: 800px; margin-left: auto; margin-right: auto;">
+        <!-- 
+          PERBAIKAN BUG ZOOM-OUT:
+          - Menghapus 'max-width: 800px'
+          - Mengganti 'justify-content: space-between' menjadi 'justify-content: center'
+          - Menambah 'flex-wrap: wrap' dan 'gap: 1rem'
+        -->
+        <div class="controls player-controls" style="margin-top: 0.5rem; justify-content: center; max-width: 100%; margin-left: auto; margin-right: auto; flex-wrap: wrap; gap: 1rem;">
              <div style="display: flex; gap: 0.5rem;">
                 <button class="control-button" onclick="kirimRequest('/api?score_kiri=1')">+1</button>
                 <button class="control-button" onclick="kirimRequest('/api?score_kiri=2')">+2</button>
                 <button class="control-button" onclick="kirimRequest('/api?score_kiri=3')">+3</button>
              </div>
              
-             <!-- PERUBAHAN URUTAN TOMBOL KANAN -->
              <div style="display: flex; gap: 0.5rem;">
                 <button class="control-button" onclick="kirimRequest('/api?score_kanan=3')">+3</button>
                 <button class="control-button" onclick="kirimRequest('/api?score_kanan=2')">+2</button>
                 <button class="control-button" onclick="kirimRequest('/api?score_kanan=1')">+1</button>
              </div>
-             <!-- BATAS PERUBAHAN -->
         </div>
 
     </div>
@@ -329,22 +331,22 @@
         let clientTimerInterval = null;
         let isWinnerShown = false;
 
-        // --- PERBAIKAN FETCH URL ---
+        // Perbaikan URL Fetch
         async function kirimRequest(path) {
-            const baseUrl = window.location.origin; // Mendapatkan alamat dasar (cth: https://...)
+            const baseUrl = window.location.origin;
             try {
-                fetch(`${baseUrl}${path}`); // Menggunakan URL lengkap
+                fetch(`${baseUrl}${path}`); 
             } catch (error) {
                 console.error('Gagal kirim request:', error);
             }
         }
         
         function updateDisplay(state) {
-            if (state.skorKiri !== currentServerState.skorKiri) {
+            if (currentServerState.skorKiri !== null && state.skorKiri !== currentServerState.skorKiri) {
                 elBoxKiri.classList.add('score-pop');
                 setTimeout(() => elBoxKiri.classList.remove('score-pop'), 200);
             }
-            if (state.skorKanan !== currentServerState.skorKanan) {
+            if (currentServerState.skorKanan !== null && state.skorKanan !== currentServerState.skorKanan) {
                 elBoxKanan.classList.add('score-pop');
                 setTimeout(() => elBoxKanan.classList.remove('score-pop'), 200);
             }
@@ -413,11 +415,11 @@
             return `${menit}:${pad(detik)}<small>${pad(milidetik)}</small>`;
         }
 
-        // --- PERBAIKAN FETCH URL ---
+        // Perbaikan URL Fetch
         async function pollServer() {
-            const baseUrl = window.location.origin; // Mendapatkan alamat dasar
+            const baseUrl = window.location.origin;
             try {
-                const response = await fetch(`${baseUrl}/api?get_state=1`); // Menggunakan URL lengkap
+                const response = await fetch(`${baseUrl}/api?get_state=1`); 
                 if (!response.ok) throw new Error('Network response was not ok');
                 
                 const newState = await response.json();
