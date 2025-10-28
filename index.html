@@ -204,29 +204,14 @@
             transform: translateY(1px);
         }
         
-        .player-controls .control-button {
-            background-color: #f0f0f0;
-            color: #333;
-        }
-        
-        .player-controls:not(.active) .control-button {
-             pointer-events: none; 
-             opacity: 0.5; 
-             cursor: not-allowed;
-        }
-        
-        .player-controls .control-button:hover {
-            background-color: #e0e0e0;
-        }
-        
-        .player-controls {
-            width: 100%;
-            max-width: 600px; 
-        }
-        .player-controls > div {
-             flex: 1; 
-             min-width: 150px; 
-        }
+        /* HAPUS: Style untuk .player-controls tidak diperlukan lagi */
+        /*
+        .player-controls .control-button { ... }
+        .player-controls:not(.active) .control-button { ... }
+        .player-controls .control-button:hover { ... }
+        .player-controls { ... }
+        .player-controls > div { ... }
+        */
 
 
         #winner-overlay {
@@ -305,19 +290,26 @@
             <button id="btn-reset" class="control-button">RESET ALL</button>
         </div>
         
+        <!-- ============================================== -->
+        <!-- BAGIAN TOMBOL MANUAL DIHAPUS DARI SINI -->
+        <!-- ============================================== -->
+        <!-- 
         <div id="player-controls-container" class="controls player-controls" style="margin-top: 0.5rem; justify-content: center; max-width: 100%; margin-left: auto; margin-right: auto; flex-wrap: wrap; gap: 1rem;">
              <div style="display: flex; gap: 0.5rem; justify-content: center;">
                 <button class="control-button" onclick="kirimRequest('/api?score_kiri=1')">+1</button>
-                <button class="control-button" onclick="kirimRequest('/api?score_kiri=2')">+2</button>
-                <button class="control-button" onclick="kirimRequest('/api?score_kiri=3')">+3</button>
+                ...
              </div>
              
              <div style="display: flex; gap: 0.5rem; justify-content: center;">
                 <button class="control-button" onclick="kirimRequest('/api?score_kanan=3')">+3</button>
-                <button class="control-button" onclick="kirimRequest('/api?score_kanan=2')">+2</button>
-                <button class="control-button" onclick="kirimRequest('/api?score_kanan=1')">+1</button>
+                ...
              </div>
-        </div>
+        </div> 
+        -->
+        <!-- ============================================== -->
+        <!-- SAMPAI SINI -->
+        <!-- ============================================== -->
+
 
     </div>
 
@@ -341,10 +333,11 @@
         const elNamaKanan = document.getElementById('nama-kanan-input');
         
         const btnStart = document.getElementById('btn-start');
-        const btnStop = document.getElementById('btn-stop'); // Tombol PAUSE
+        const btnStop = document.getElementById('btn-stop'); 
         const btnReset = document.getElementById('btn-reset');
 
-        const elPlayerControls = document.getElementById('player-controls-container'); 
+        // HAPUS: elPlayerControls tidak ada lagi
+        // const elPlayerControls = document.getElementById('player-controls-container'); 
         
         const winnerOverlay = document.getElementById('winner-overlay');
         const winnerName = document.getElementById('winner-name');
@@ -358,10 +351,8 @@
         async function kirimRequest(path) {
             const baseUrl = window.location.origin;
             try {
-                // Tampilkan indikator loading atau disable tombol sesaat? (Opsional)
-                console.log('Mengirim:', path); // Logging
-                await fetch(`${baseUrl}${path}`); // Tunggu fetch selesai (opsional, tapi bisa bantu debug)
-                // Langsung panggil poll setelah kirim perintah agar update lebih cepat
+                // console.log('Mengirim:', path); 
+                await fetch(`${baseUrl}${path}`); 
                 setTimeout(pollServer, 50); 
             } catch (error) {
                 console.error('Gagal kirim request:', error);
@@ -388,7 +379,6 @@
             if (document.activeElement !== elNamaKanan) {
                 elNamaKanan.value = newState.namaKanan || "PEMAIN 2";
             }
-            // Nonaktifkan input nama jika timer jalan ATAU ada pemenang
             const disableInputs = newState.timerRunning || newState.winnerName;
             elNamaKiri.disabled = disableInputs;
             elNamaKanan.disabled = disableInputs;
@@ -406,12 +396,13 @@
                      elTimer.innerHTML = formatTime(displayTime);
                 }
                 btnStart.style.display = 'none';
-                btnStop.style.display = 'inline-block'; // Tampilkan PAUSE
-                elPlayerControls.classList.add('active'); // Aktifkan tombol skor
+                btnStop.style.display = 'inline-block'; 
+                // HAPUS: Tidak perlu toggle class active lagi
+                // elPlayerControls.classList.add('active'); 
             } else {
                 // Timer sedang pause atau berhenti
                 stopClientTimer(); 
-                elTimer.innerHTML = formatTime(displayTime); // Tampilkan waktu sisa terakhir
+                elTimer.innerHTML = formatTime(displayTime); 
 
                 // Logika tombol Start/Pause
                 if (displayTime > 0 && !newState.winnerName) {
@@ -421,7 +412,8 @@
                     btnStart.style.display = 'none'; 
                     btnStop.style.display = 'none'; 
                 }
-                elPlayerControls.classList.remove('active'); // Nonaktifkan tombol skor
+                 // HAPUS: Tidak perlu toggle class active lagi
+                // elPlayerControls.classList.remove('active'); 
             }
             
             // --- Logika Pemenang ---
@@ -432,7 +424,7 @@
                 isWinnerShown = true; 
                 btnStart.style.display = 'none';
                 btnStop.style.display = 'none';
-                stopClientTimer(); // Pastikan timer client berhenti
+                stopClientTimer(); 
             } else if (!newState.winnerName && isWinnerShown) {
                  console.log("Menyembunyikan notif karena state direset");
                  winnerOverlay.style.display = 'none';
@@ -448,23 +440,19 @@
             if (clientTimerInterval) return; 
 
             const initialRemaining = (typeof serverCurrentRemainingTime === 'number' && !isNaN(serverCurrentRemainingTime)) ? serverCurrentRemainingTime : 0;
-            // Hitung kapan timer seharusnya berakhir berdasarkan waktu server
             const serverEndTime = serverLastStartTime + initialRemaining; 
 
-            console.log("Starting client timer. Initial:", initialRemaining, "Server End Time:", new Date(serverEndTime));
+            // console.log("Starting client timer. Initial:", initialRemaining, "Server End Time:", new Date(serverEndTime));
             
             clientTimerInterval = setInterval(() => {
                 const now = Date.now();
-                 // Hitung sisa waktu berdasarkan waktu SEKARANG dan waktu AKHIR server
                 const currentRemaining = Math.max(0, serverEndTime - now); 
                 
                 elTimer.innerHTML = formatTime(currentRemaining);
 
                 if (currentRemaining <= 0) {
-                     console.log("Client timer reached zero based on server end time.");
+                     // console.log("Client timer reached zero based on server end time.");
                      stopClientTimer();
-                     // Mungkin paksa polling setelah interval polling normal
-                     // untuk memastikan server sudah update winner state
                      setTimeout(pollServer, 210); 
                 }
             }, 50); 
@@ -518,10 +506,10 @@
                 } else {
                      // Sinkronisasi timer jika diperlukan
                     if(newState.timerRunning && !clientTimerInterval && newState.lastStartTime) {
-                        console.log("Resyncing running timer.");
+                        // console.log("Resyncing running timer.");
                          startClientTimer(newState.lastStartTime, newState.currentRemainingTime);
                     } else if (!newState.timerRunning && clientTimerInterval) {
-                        console.log("Resyncing paused timer.");
+                        // console.log("Resyncing paused timer.");
                          stopClientTimer();
                          elTimer.innerHTML = formatTime(newState.currentRemainingTime ?? newState.remainingTime);
                     }
@@ -534,14 +522,12 @@
         }
 
         // --- Event Listener Tombol ---
-        // Pastikan hanya mengirim 1 request per klik
         let isSending = false; 
         const handleRequest = async (path) => {
-             if (isSending) return; // Cegah klik ganda
+             if (isSending) return; 
              isSending = true;
              await kirimRequest(path);
-             // Beri jeda sedikit sebelum mengizinkan klik lagi
-             setTimeout(() => { isSending = false; }, 300); // Jeda 300ms
+             setTimeout(() => { isSending = false; }, 300); 
         };
 
         btnStart.onclick = () => handleRequest('/api?start_timer=1');
@@ -558,7 +544,8 @@
                 isWinnerShown = false; 
                 elNamaKiri.disabled = false;
                 elNamaKanan.disabled = false;
-                elPlayerControls.classList.remove('active');
+                // HAPUS: Tidak ada elPlayerControls lagi
+                // elPlayerControls.classList.remove('active');
                 btnStart.style.display = 'inline-block'; 
                 btnStop.style.display = 'none'; 
                 currentServerState = {}; 
@@ -577,7 +564,8 @@
              elSkorKanan.textContent = 0;
              elNamaKiri.disabled = false;
              elNamaKanan.disabled = false;
-             elPlayerControls.classList.remove('active');
+             // HAPUS: Tidak ada elPlayerControls lagi
+             // elPlayerControls.classList.remove('active');
              btnStart.style.display = 'inline-block';
              btnStop.style.display = 'none';
              currentServerState = {}; 
@@ -604,7 +592,8 @@
 
         // --- Inisialisasi ---
         elTimer.innerHTML = formatTime(INITIAL_TIME_MS_FRONTEND);
-        elPlayerControls.classList.remove('active'); 
+        // HAPUS: Tidak ada elPlayerControls lagi
+        // elPlayerControls.classList.remove('active'); 
         btnStop.style.display = 'none'; 
         setInterval(pollServer, 200);
         setTimeout(pollServer, 50); 
@@ -612,3 +601,4 @@
     </script>
 </body>
 </html>
+
