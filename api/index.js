@@ -3,7 +3,7 @@ import { kv } from '@vercel/kv';
 const STATE_KEY = 'scoreboard_state';
 const INITIAL_TIME_MS = 180 * 1000; // 3 menit
 
-// Fungsi cek pemenang (disederhanakan)
+// Fungsi cek pemenang
 function cekPemenang(state) {
   if (state.winnerName) return state.winnerName;
   const skorKiri = parseInt(state.skorKiri) || 0;
@@ -36,6 +36,7 @@ const getDefaultState = () => ({
     winnerName: null
 });
 
+
 export default async function handler(req, res) {
   const handlerStartTime = Date.now();
   console.log(`[API] Request: ${req.url}`);
@@ -47,10 +48,9 @@ export default async function handler(req, res) {
     if (!state || typeof state.remainingTime !== 'number' || isNaN(state.remainingTime)) {
       console.log("[API] State awal tidak valid/kosong -> Reset ke default.");
       state = getDefaultState();
-      // Jangan langsung simpan, biarkan proses di bawah yg simpan jika ada perubahan
+      await kv.set(STATE_KEY, state);
     } else {
-      // Pastikan field penting ada & valid
-      state = { ...getDefaultState(), ...state }; // Gabungkan dengan default untuk pastikan semua field ada
+      state = { ...getDefaultState(), ...state }; // Gabungkan dengan default
       state.skorKiri = parseInt(state.skorKiri) || 0;
       state.skorKanan = parseInt(state.skorKanan) || 0;
       state.timerRunning = state.timerRunning === true;
@@ -63,18 +63,21 @@ export default async function handler(req, res) {
     let stateChanged = false;
     const now = Date.now();
 
-    // --- Hitung Sisa Waktu Saat Ini (harus dihitung SEBELUM proses input) ---
+    // --- Hitung Sisa Waktu Saat Ini ---
     let currentRemainingTime = state.remainingTime;
     if (state.timerRunning && !state.winnerName && state.lastStartTime > 0) {
          const elapsedSinceStart = now - state.lastStartTime;
          currentRemainingTime = Math.max(0, state.remainingTime - elapsedSinceStart);
          if (currentRemainingTime <= 0 && state.remainingTime > 0) {
-             console.log("[TIMER] Waktu habis saat timer berjalan (di perhitungan awal).");
-             // JANGAN ubah state di sini, biarkan cek pemenang yg handle
+             console.log("[TIMER] Waktu habis saat timer berjalan.");
+             state.timerRunning = false;
+             state.remainingTime = 0;
+             state.lastStartTime = 0;
+             stateChanged = true;
+             currentRemainingTime = 0;
          }
     }
-    // Final check agar tidak NaN
-    currentRemainingTime = (typeof currentRemainingTime === 'number' && !isNaN(currentRemainingTime)) ? currentRemainingTime : 0;
+    currentRemainingTime = (typeof currentRemainingTime === 'number' && !isNaN(currentRemainingTime)) ? currentRemainingTime : (state.remainingTime ?? 0);
     // console.log(`[TIMER] CurrentRemainingTime dihitung: ${currentRemainingTime}`);
 
 
@@ -129,7 +132,7 @@ export default async function handler(req, res) {
                 state.lastStartTime = 0; // Reset lastStartTime
                 stateChanged = true;
                 console.log("  -> Action: PAUSE. Sisa disimpan:", state.remainingTime);
-                currentRemainingTime = state.remainingTime; // Update current time
+                currentRemainingTime = state.remainingTime; // Update current time juga
             } else { console.log("  -> Action: PAUSE/TOGGLE-OFF diabaikan."); }
         }
     } // Akhir blok if (!state.winnerName)
@@ -140,7 +143,7 @@ export default async function handler(req, res) {
       console.log("[RESET] Input: reset_skor");
       state = getDefaultState();
       stateChanged = true;
-      await kv.del('referee_inputs').catch(err => console.warn("Gagal hapus INPUT_KEY:", err)); // Hapus key wasit lama jika ada
+      await kv.del('referee_inputs').catch(err => console.warn("Gagal hapus INPUT_KEY:", err));
       currentRemainingTime = state.remainingTime;
       console.log("  -> Action: State direset.");
     }
@@ -188,10 +191,15 @@ export default async function handler(req, res) {
       state.lastStartTime = parseInt(state.lastStartTime) || 0;
       state.skorKiri = parseInt(state.skorKiri) || 0;
       state.skorKanan = parseInt(state.skorKanan) || 0;
-      state.timerRunning = state.timerRunning === true; // Pastikan boolean
+      state.timerRunning = state.timerRunning === true;
 
-      await kv.set(STATE_KEY, state);
-      console.log("[API] State disimpan:", JSON.stringify(state));
+      try {
+          await kv.set(STATE_KEY, state);
+          console.log("[API] State disimpan:", JSON.stringify(state));
+      } catch (kvError) {
+           console.error("[API] Gagal menyimpan state ke KV:", kvError);
+           return res.status(500).json({ error: 'KV Set Error', details: kvError.message });
+      }
     }
 
     // --- Kirim Respons ---
