@@ -4,7 +4,6 @@
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <title>Scoreboard Tatami</title>
-    <!-- Font Roboto & Orbitron -->
     <link href="https://fonts.googleapis.com/css2?family=Roboto:wght@400;700;900&family=Orbitron:wght@700&display=swap" rel="stylesheet">
     
     <style>
@@ -17,8 +16,7 @@
             --color-light: #FAFAFA;
             --color-accent: #00BCD4;
             
-            /* Font dasar tetap Roboto */
-            font-family: 'Roboto', sans-serif; 
+            font-family: 'Roboto', sans-serif;
             font-synthesis: none;
             text-rendering: optimizeLegibility;
             -webkit-font-smoothing: antialiased;
@@ -41,7 +39,6 @@
             align-items: center;
             min-height: 100vh;
             padding: 1rem;
-            overflow-x: hidden; 
         }
 
         .container {
@@ -68,23 +65,21 @@
             justify-content: space-around;
             align-items: stretch;
             width: 100%;
-            gap: clamp(1rem, 3vw, 1.5rem); 
+            gap: 1.5rem;
         }
 
         .player {
             flex: 1;
             background: #FFFFFF;
             border-radius: 20px;
-            padding: clamp(1rem, 3vw, 1.5rem); 
+            padding: 1.5rem;
             box-shadow: 0 10px 30px rgba(0, 0, 0, 0.08);
             display: flex;
             flex-direction: column;
-            max-width: 500px; 
-            margin: 0 auto;
         }
 
         .player-name-input {
-            font-size: clamp(1rem, 2.5vw, 1.2rem); 
+            font-size: 1.2rem;
             font-weight: 700;
             border: 2px solid #ddd;
             border-radius: 8px;
@@ -124,9 +119,9 @@
             justify-content: center;
             align-items: center;
             
-            /* KEMBALIKAN FONT ORBITRON */
-            font-family: 'Orbitron', sans-serif; 
-            font-size: clamp(4rem, 15vw, 8rem); /* Tetap pakai clamp yang aman */
+            font-family: 'Orbitron', sans-serif;
+            /* PERBAIKAN BUG ZOOM: Minimum diubah dari 6rem ke 4rem */
+            font-size: clamp(4rem, 20vw, 12rem);
             font-weight: 700;
             color: white;
             text-shadow: 0 4px 10px rgba(0, 0, 0, 0.2);
@@ -141,12 +136,11 @@
         }
 
         .vs {
-            font-size: clamp(2.5rem, 5vw, 4rem); 
+            font-size: clamp(3rem, 10vw, 5rem);
             font-weight: 900;
             color: #BDBDBD;
             align-self: center;
             flex: 0.5;
-            padding: 0 0.5rem; 
         }
 
         .timer-container {
@@ -157,33 +151,32 @@
         .timer {
             background-color: var(--color-dark);
             color: white;
-             /* KEMBALIKAN FONT ORBITRON */
             font-family: 'Orbitron', sans-serif;
-            font-size: clamp(2rem, 6vw, 4rem); /* Tetap pakai clamp yang aman */
+            font-size: clamp(3rem, 12vw, 5.5rem);
             font-weight: 700;
-            padding: 1rem 1.5rem; 
+            padding: 1.5rem 2rem;
             border-radius: 15px;
             display: inline-block;
             box-shadow: 0 4px 20px rgba(0, 0, 0, 0.2);
             width: 100%;
-            max-width: 400px; 
+            max-width: 500px;
         }
         .timer small {
-            font-size: clamp(1rem, 3vw, 2rem); /* Tetap pakai clamp yang aman */
+            font-size: clamp(1.5rem, 6vw, 2.5rem);
         }
 
         .controls {
             margin-top: 1.5rem;
             display: flex;
             justify-content: center;
-            gap: 0.75rem; 
+            gap: 1rem;
             flex-wrap: wrap;
         }
         
         .control-button {
-            font-size: 0.9rem; 
+            font-size: 1rem;
             font-weight: 700;
-            padding: 0.6rem 1.2rem; 
+            padding: 0.8rem 1.5rem;
             border: none;
             border-radius: 8px;
             cursor: pointer;
@@ -209,16 +202,6 @@
         .player-controls .control-button:hover {
             background-color: #e0e0e0;
         }
-        
-        .player-controls {
-            width: 100%;
-            max-width: 600px; 
-        }
-        .player-controls > div {
-             flex: 1; 
-             min-width: 150px; 
-        }
-
 
         #winner-overlay {
             position: fixed;
@@ -236,24 +219,23 @@
 
         #winner-box {
             background-color: white;
-            padding: 2.5rem 3rem; 
+            padding: 3rem 4rem;
             border-radius: 15px;
             text-align: center;
             box-shadow: 0 10px 30px rgba(0,0,0,0.3);
             animation: fadeIn 0.5s ease;
             transform: scale(0.9);
-            max-width: 90%; 
         }
         
         #winner-box h1 {
-            font-size: clamp(2rem, 6vw, 3rem); 
+            font-size: 3rem;
             margin-top: 0;
             color: var(--color-accent);
         }
         #winner-name {
-            font-size: clamp(1.5rem, 4vw, 2rem); 
+            font-size: 2rem;
             font-weight: 700;
-            margin-bottom: 1.5rem;
+            margin-bottom: 2rem;
         }
 
         @keyframes fadeIn {
@@ -296,14 +278,20 @@
             <button id="btn-reset" class="control-button">RESET ALL</button>
         </div>
         
+        <!-- 
+          PERBAIKAN BUG ZOOM-OUT:
+          - Menghapus 'max-width: 800px'
+          - Mengganti 'justify-content: space-between' menjadi 'justify-content: center'
+          - Menambah 'flex-wrap: wrap' dan 'gap: 1rem'
+        -->
         <div class="controls player-controls" style="margin-top: 0.5rem; justify-content: center; max-width: 100%; margin-left: auto; margin-right: auto; flex-wrap: wrap; gap: 1rem;">
-             <div style="display: flex; gap: 0.5rem; justify-content: center;">
+             <div style="display: flex; gap: 0.5rem;">
                 <button class="control-button" onclick="kirimRequest('/api?score_kiri=1')">+1</button>
                 <button class="control-button" onclick="kirimRequest('/api?score_kiri=2')">+2</button>
                 <button class="control-button" onclick="kirimRequest('/api?score_kiri=3')">+3</button>
              </div>
              
-             <div style="display: flex; gap: 0.5rem; justify-content: center;">
+             <div style="display: flex; gap: 0.5rem;">
                 <button class="control-button" onclick="kirimRequest('/api?score_kanan=3')">+3</button>
                 <button class="control-button" onclick="kirimRequest('/api?score_kanan=2')">+2</button>
                 <button class="control-button" onclick="kirimRequest('/api?score_kanan=1')">+1</button>
@@ -343,6 +331,7 @@
         let clientTimerInterval = null;
         let isWinnerShown = false;
 
+        // Perbaikan URL Fetch
         async function kirimRequest(path) {
             const baseUrl = window.location.origin;
             try {
@@ -353,11 +342,11 @@
         }
         
         function updateDisplay(state) {
-             if (currentServerState.skorKiri !== undefined && state.skorKiri !== currentServerState.skorKiri) {
+            if (currentServerState.skorKiri !== null && state.skorKiri !== currentServerState.skorKiri) {
                 elBoxKiri.classList.add('score-pop');
                 setTimeout(() => elBoxKiri.classList.remove('score-pop'), 200);
             }
-            if (currentServerState.skorKanan !== undefined && state.skorKanan !== currentServerState.skorKanan) {
+            if (currentServerState.skorKanan !== null && state.skorKanan !== currentServerState.skorKanan) {
                 elBoxKanan.classList.add('score-pop');
                 setTimeout(() => elBoxKanan.classList.remove('score-pop'), 200);
             }
@@ -426,6 +415,7 @@
             return `${menit}:${pad(detik)}<small>${pad(milidetik)}</small>`;
         }
 
+        // Perbaikan URL Fetch
         async function pollServer() {
             const baseUrl = window.location.origin;
             try {
@@ -434,7 +424,7 @@
                 
                 const newState = await response.json();
                 
-                if (JSON.stringify(newState) !== JSON.stringify(currentServerState || {})) { 
+                if (JSON.stringify(newState) !== JSON.stringify(currentServerState)) {
                     updateDisplay(newState);
                     currentServerState = newState;
                 }
@@ -469,7 +459,7 @@
 
         // Polling Cepat
         setInterval(pollServer, 200);
-        pollServer(); // Ambil data pertama kali
+        pollServer();
     </script>
 </body>
 </html>
