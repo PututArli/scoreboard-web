@@ -4,6 +4,7 @@
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <title>Scoreboard Tatami</title>
+    <!-- Font Roboto & Orbitron -->
     <link href="https://fonts.googleapis.com/css2?family=Roboto:wght@400;700;900&family=Orbitron:wght@700&display=swap" rel="stylesheet">
     
     <style>
@@ -16,7 +17,8 @@
             --color-light: #FAFAFA;
             --color-accent: #00BCD4;
             
-            font-family: 'Roboto', sans-serif;
+            /* Font dasar tetap Roboto */
+            font-family: 'Roboto', sans-serif; 
             font-synthesis: none;
             text-rendering: optimizeLegibility;
             -webkit-font-smoothing: antialiased;
@@ -39,7 +41,6 @@
             align-items: center;
             min-height: 100vh;
             padding: 1rem;
-            /* Cegah horizontal scroll bar */
             overflow-x: hidden; 
         }
 
@@ -67,14 +68,14 @@
             justify-content: space-around;
             align-items: stretch;
             width: 100%;
-            gap: clamp(1rem, 3vw, 1.5rem); /* Gap responsif */
+            gap: clamp(1rem, 3vw, 1.5rem); 
         }
 
         .player {
             flex: 1;
             background: #FFFFFF;
             border-radius: 20px;
-            padding: clamp(1rem, 3vw, 1.5rem); /* Padding responsif */
+            padding: clamp(1rem, 3vw, 1.5rem); 
             box-shadow: 0 10px 30px rgba(0, 0, 0, 0.08);
             display: flex;
             flex-direction: column;
@@ -83,7 +84,7 @@
         }
 
         .player-name-input {
-            font-size: clamp(1rem, 2.5vw, 1.2rem); /* Ukuran font responsif */
+            font-size: clamp(1rem, 2.5vw, 1.2rem); 
             font-weight: 700;
             border: 2px solid #ddd;
             border-radius: 8px;
@@ -123,9 +124,9 @@
             justify-content: center;
             align-items: center;
             
-            font-family: 'Orbitron', sans-serif; /* Font Orbitron */
-            /* PERBAIKAN ZOOM: Batasi ukuran MAX jadi 8rem */
-            font-size: clamp(4rem, 15vw, 8rem); 
+            /* KEMBALIKAN FONT ORBITRON */
+            font-family: 'Orbitron', sans-serif; 
+            font-size: clamp(4rem, 15vw, 8rem); /* Tetap pakai clamp yang aman */
             font-weight: 700;
             color: white;
             text-shadow: 0 4px 10px rgba(0, 0, 0, 0.2);
@@ -140,13 +141,12 @@
         }
 
         .vs {
-            /* PERBAIKAN ZOOM: Batasi ukuran MAX jadi 4rem */
             font-size: clamp(2.5rem, 5vw, 4rem); 
             font-weight: 900;
             color: #BDBDBD;
             align-self: center;
             flex: 0.5;
-            padding: 0 0.5rem; /* Beri sedikit jarak */
+            padding: 0 0.5rem; 
         }
 
         .timer-container {
@@ -157,34 +157,33 @@
         .timer {
             background-color: var(--color-dark);
             color: white;
-            font-family: 'Orbitron', sans-serif; /* Font Orbitron */
-            /* PERBAIKAN ZOOM: Batasi ukuran MAX jadi 4rem */
-            font-size: clamp(2rem, 6vw, 4rem); 
+             /* KEMBALIKAN FONT ORBITRON */
+            font-family: 'Orbitron', sans-serif;
+            font-size: clamp(2rem, 6vw, 4rem); /* Tetap pakai clamp yang aman */
             font-weight: 700;
-            padding: 1rem 1.5rem; /* Padding dikecilkan sedikit */
+            padding: 1rem 1.5rem; 
             border-radius: 15px;
             display: inline-block;
             box-shadow: 0 4px 20px rgba(0, 0, 0, 0.2);
             width: 100%;
-            max-width: 400px; /* Max-width dikecilkan */
+            max-width: 400px; 
         }
         .timer small {
-            /* PERBAIKAN ZOOM: Batasi ukuran MAX jadi 2rem */
-            font-size: clamp(1rem, 3vw, 2rem); 
+            font-size: clamp(1rem, 3vw, 2rem); /* Tetap pakai clamp yang aman */
         }
 
         .controls {
             margin-top: 1.5rem;
             display: flex;
             justify-content: center;
-            gap: 0.75rem; /* Gap dikecilkan sedikit */
+            gap: 0.75rem; 
             flex-wrap: wrap;
         }
         
         .control-button {
-            font-size: 0.9rem; /* Ukuran font tombol dikecilkan */
+            font-size: 0.9rem; 
             font-weight: 700;
-            padding: 0.6rem 1.2rem; /* Padding tombol dikecilkan */
+            padding: 0.6rem 1.2rem; 
             border: none;
             border-radius: 8px;
             cursor: pointer;
@@ -211,14 +210,13 @@
             background-color: #e0e0e0;
         }
         
-        /* PERBAIKAN ZOOM: Pastikan tombol player-controls tidak terlalu lebar */
         .player-controls {
             width: 100%;
-            max-width: 600px; /* Batasi lebar container tombol player */
+            max-width: 600px; 
         }
         .player-controls > div {
-             flex: 1; /* Agar tombol kiri dan kanan lebarnya imbang */
-             min-width: 150px; /* Lebar minimum grup tombol */
+             flex: 1; 
+             min-width: 150px; 
         }
 
 
@@ -238,22 +236,22 @@
 
         #winner-box {
             background-color: white;
-            padding: 2.5rem 3rem; /* Padding dikecilkan */
+            padding: 2.5rem 3rem; 
             border-radius: 15px;
             text-align: center;
             box-shadow: 0 10px 30px rgba(0,0,0,0.3);
             animation: fadeIn 0.5s ease;
             transform: scale(0.9);
-            max-width: 90%; /* Agar tidak terlalu lebar di HP */
+            max-width: 90%; 
         }
         
         #winner-box h1 {
-            font-size: clamp(2rem, 6vw, 3rem); /* Ukuran font responsif */
+            font-size: clamp(2rem, 6vw, 3rem); 
             margin-top: 0;
             color: var(--color-accent);
         }
         #winner-name {
-            font-size: clamp(1.5rem, 4vw, 2rem); /* Ukuran font responsif */
+            font-size: clamp(1.5rem, 4vw, 2rem); 
             font-weight: 700;
             margin-bottom: 1.5rem;
         }
@@ -324,7 +322,6 @@
 
 
     <script>
-        // --- JAVASCRIPT TETAP SAMA DARI SEBELUMNYA ---
         const elSkorKiri = document.getElementById('skor-kiri-text');
         const elSkorKanan = document.getElementById('skor-kanan-text');
         const elBoxKiri = document.getElementById('score-kiri');
@@ -356,7 +353,6 @@
         }
         
         function updateDisplay(state) {
-            // Cek skor null sebelum membandingkan untuk animasi pop awal
              if (currentServerState.skorKiri !== undefined && state.skorKiri !== currentServerState.skorKiri) {
                 elBoxKiri.classList.add('score-pop');
                 setTimeout(() => elBoxKiri.classList.remove('score-pop'), 200);
@@ -438,7 +434,6 @@
                 
                 const newState = await response.json();
                 
-                // Perbaiki kondisi agar tidak error saat pertama kali load
                 if (JSON.stringify(newState) !== JSON.stringify(currentServerState || {})) { 
                     updateDisplay(newState);
                     currentServerState = newState;
