@@ -4,84 +4,112 @@
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <title>Scoreboard Tatami</title>
+    <!-- BARU: Ganti font -->
+    <link href="https://fonts.googleapis.com/css2?family=Roboto:wght@400;700;900&family=Orbitron:wght@700&display=swap" rel="stylesheet">
+    
     <style>
-        @import url('https://fonts.googleapis.com/css2?family=Roboto:wght@700;900&display=swap');
-
+        /* BARU: CSS Reset & Font Global */
         :root {
             --color-red: #E53935;
+            --color-red-dark: #C62828;
             --color-blue: #1E88E5;
+            --color-blue-dark: #1565C0;
             --color-dark: #212121;
             --color-light: #FAFAFA;
             --color-accent: #00BCD4;
+            
+            /* Font utama */
+            font-family: 'Roboto', sans-serif;
+            font-synthesis: none;
+            text-rendering: optimizeLegibility;
+            -webkit-font-smoothing: antialiased;
+            -moz-osx-font-smoothing: grayscale;
+            -webkit-text-size-adjust: 100%;
         }
 
+        *, *::before, *::after {
+            box-sizing: border-box;
+            margin: 0;
+            padding: 0;
+        }
+
+        /* BARU: Latar belakang Gradient & Perbaikan Bug Layar Penuh */
         body {
-            font-family: 'Roboto', sans-serif;
-            background-color: var(--color-light);
+            background: linear-gradient(135deg, #f5f7fa 0%, #c3cfe2 100%);
             color: var(--color-dark);
             display: flex;
+            flex-direction: column;
             justify-content: center;
             align-items: center;
-            min-height: 100vh;
-            margin: 0;
+            min-height: 100vh; /* Pastikan full di layar */
             padding: 1rem;
-            box-sizing: border-box;
         }
 
         .container {
             width: 100%;
             max-width: 1200px;
             text-align: center;
+            padding: 1rem;
         }
 
+        /* BARU: Desain Header (lebih bulat) */
         .header {
             background-color: var(--color-accent);
             color: white;
-            padding: 0.5rem 1.5rem;
-            border-radius: 8px;
-            font-size: 1.5rem;
+            padding: 0.75rem 2rem;
+            border-radius: 50px;
+            font-size: 1.25rem;
             font-weight: 700;
             display: inline-block;
             margin-bottom: 2rem;
-            box-shadow: 0 4px 10px rgba(0, 188, 212, 0.4);
+            box-shadow: 0 4px 15px rgba(0, 188, 212, 0.4);
         }
 
         .scoreboard {
             display: flex;
             justify-content: space-around;
-            align-items: center;
+            align-items: stretch; /* Membuat kolom sama tinggi */
             width: 100%;
-            gap: 1rem;
+            gap: 1.5rem;
         }
 
+        /* BARU: Desain Kartu Pemain (lebih bagus) */
         .player {
             flex: 1;
+            background: #FFFFFF;
+            border-radius: 20px;
+            padding: 1.5rem;
+            box-shadow: 0 10px 30px rgba(0, 0, 0, 0.08);
+            display: flex;
+            flex-direction: column;
         }
 
-        .player h2 {
-            font-size: 2.5rem;
-            margin: 0;
-        }
-        
         .player-name-input {
             font-size: 1.2rem;
             font-weight: 700;
             border: 2px solid #ddd;
-            border-radius: 6px;
+            border-radius: 8px;
             padding: 0.5rem;
             text-align: center;
-            width: 80%;
-            margin-top: 0.5rem;
+            width: 100%;
+            margin-bottom: 1rem;
+            transition: all 0.2s;
         }
-        #nama-kiri-input { color: var(--color-red); border-color: var(--color-red); }
-        #nama-kanan-input { color: var(--color-blue); border-color: var(--color-blue); }
+        .player-name-input:focus {
+            border-color: var(--color-accent);
+            outline: none;
+            box-shadow: 0 0 10px rgba(0, 188, 212, 0.3);
+        }
+        #nama-kiri-input { color: var(--color-red-dark); border-color: var(--color-red); }
+        #nama-kanan-input { color: var(--color-blue-dark); border-color: var(--color-blue); }
 
         .score-box {
             width: 100%;
-            padding-top: 100%;
+            padding-top: 100%; /* Membuat kotak 1:1 */
             position: relative;
             border-radius: 20px;
-            box-shadow: 0 10px 25px rgba(0, 0, 0, 0.1);
+            box-shadow: inset 0 4px 10px rgba(0, 0, 0, 0.1);
+            transition: transform 0.2s ease-out; /* Untuk animasi pop */
         }
         
         #score-kiri { background-color: var(--color-red); }
@@ -96,38 +124,55 @@
             display: flex;
             justify-content: center;
             align-items: center;
-            font-size: 15vw;
-            font-weight: 900;
+            
+            /* BARU: Font digital + PERBAIKAN BUG ZOOM OUT */
+            font-family: 'Orbitron', sans-serif;
+            /* clamp(min, preferred, max) */
+            font-size: clamp(6rem, 20vw, 12rem);
+            font-weight: 700;
             color: white;
+            text-shadow: 0 4px 10px rgba(0, 0, 0, 0.2);
         }
         
-        @media (min-width: 768px) {
-            .score-number {
-                font-size: 10rem;
-            }
+        /* BARU: Animasi "Pop" saat skor berubah */
+        .score-pop {
+            animation: pop 0.2s ease-out;
+        }
+        @keyframes pop {
+            0%, 100% { transform: scale(1); }
+            50% { transform: scale(1.05); }
         }
 
         .vs {
-            font-size: 5rem;
+            font-size: clamp(3rem, 10vw, 5rem);
             font-weight: 900;
             color: #BDBDBD;
+            align-self: center;
             flex: 0.5;
         }
 
         .timer-container {
             margin-top: 2rem;
+            width: 100%;
         }
 
+        /* BARU: Desain Timer (Font + Perbaikan Bug) */
         .timer {
             background-color: var(--color-dark);
             color: white;
-            font-size: 5rem;
+            font-family: 'Orbitron', sans-serif;
+            /* clamp(min, preferred, max) */
+            font-size: clamp(3rem, 12vw, 5.5rem);
             font-weight: 700;
-            padding: 1rem 2rem;
+            padding: 1.5rem 2rem;
             border-radius: 15px;
             display: inline-block;
-            box-shadow: 0 4px 15px rgba(0, 0, 0, 0.2);
-            min-width: 300px;
+            box-shadow: 0 4px 20px rgba(0, 0, 0, 0.2);
+            width: 100%;
+            max-width: 500px; /* Batasi lebar max timer */
+        }
+        .timer small {
+            font-size: clamp(1.5rem, 6vw, 2.5rem);
         }
 
         .controls {
@@ -138,6 +183,7 @@
             flex-wrap: wrap;
         }
         
+        /* BARU: Desain Tombol (lebih modern) */
         .control-button {
             font-size: 1rem;
             font-weight: 700;
@@ -156,7 +202,20 @@
             opacity: 0.8;
             transform: translateY(-2px);
         }
+        .control-button:active {
+            transform: translateY(1px);
+        }
+        
+        /* Tombol + / - skor manual */
+        .player-controls .control-button {
+            background-color: #f0f0f0;
+            color: #333;
+        }
+        .player-controls .control-button:hover {
+            background-color: #e0e0e0;
+        }
 
+        /* BARU: Desain Notifikasi Pemenang */
         #winner-overlay {
             position: fixed;
             top: 0;
@@ -168,6 +227,7 @@
             justify-content: center;
             align-items: center;
             z-index: 1000;
+            backdrop-filter: blur(5px);
         }
 
         #winner-box {
@@ -177,6 +237,7 @@
             text-align: center;
             box-shadow: 0 10px 30px rgba(0,0,0,0.3);
             animation: fadeIn 0.5s ease;
+            transform: scale(0.9);
         }
         
         #winner-box h1 {
@@ -200,7 +261,7 @@
 <body>
 
     <div class="container">
-        <div class="header">TATAMI</div>
+        <div class="header">TATAMI SCOREBOARD</div>
 
         <div class="scoreboard">
             <div class="player">
@@ -210,7 +271,7 @@
                 </div>
             </div>
 
-            <div class="vs">VS</div>
+            <div classs="vs">VS</div>
 
             <div class="player">
                 <input type="text" id="nama-kanan-input" class="player-name-input" value="PEMAIN 2">
@@ -230,16 +291,17 @@
             <button id="btn-reset" class="control-button">RESET ALL</button>
         </div>
         
-        <div class="controls" style="margin-top: 0.5rem; justify-content: space-around;">
-             <div class="player-controls">
-                <button class="control-button" onclick="kirimRequest('/api?score_kiri=1')">+1 Kiri</button>
-                <button class="control-button" onclick="kirimRequest('/api?score_kiri=2')">+2 Kiri</button>
-                <button class="control-button" onclick="kirimRequest('/api?score_kiri=3')">+3 Kiri</button>
+        <!-- Tombol manual di web -->
+        <div class="controls player-controls" style="margin-top: 0.5rem; justify-content: space-between; max-width: 800px; margin-left: auto; margin-right: auto;">
+             <div style="display: flex; gap: 0.5rem;">
+                <button class="control-button" onclick="kirimRequest('/api?score_kiri=1')">+1</button>
+                <button class="control-button" onclick="kirimRequest('/api?score_kiri=2')">+2</button>
+                <button class="control-button" onclick="kirimRequest('/api?score_kiri=3')">+3</button>
              </div>
-             <div class="player-controls">
-                <button class="control-button" onclick="kirimRequest('/api?score_kanan=1')">+1 Kanan</button>
-                <button class="control-button" onclick="kirimRequest('/api?score_kanan=2')">+2 Kanan</button>
-                <button class="control-button" onclick="kirimRequest('/api?score_kanan=3')">+3 Kanan</button>
+             <div style="display: flex; gap: 0.5rem;">
+                <button class="control-button" onclick="kirimRequest('/api?score_kanan=1')">+1</button>
+                <button class="control-button" onclick="kirimRequest('/api?score_kanan=2')">+2</button>
+                <button class="control-button" onclick="kirimRequest('/api?score_kanan=3')">+3</button>
              </div>
         </div>
 
@@ -249,7 +311,7 @@
         <div id="winner-box">
             <h1>PEMENANG!</h1>
             <div id="winner-name">NAMA PEMENANG</div>
-            <button id="btn-close-winner" class="control-button" style="background-color: var(--color-accent); color: white;">Tutup</button>
+            <button id="btn-close-winner" class="control-button" style="background-color: var(--color-accent); color: white;">Tutup & Reset</button>
         </div>
     </div>
 
@@ -257,6 +319,9 @@
     <script>
         const elSkorKiri = document.getElementById('skor-kiri-text');
         const elSkorKanan = document.getElementById('skor-kanan-text');
+        const elBoxKiri = document.getElementById('score-kiri');
+        const elBoxKanan = document.getElementById('score-kanan');
+        
         const elTimer = document.getElementById('timer-text');
         const elNamaKiri = document.getElementById('nama-kiri-input');
         const elNamaKanan = document.getElementById('nama-kanan-input');
@@ -282,6 +347,16 @@
         }
         
         function updateDisplay(state) {
+            // BARU: Cek skor mana yang berubah untuk animasi
+            if (state.skorKiri !== currentServerState.skorKiri) {
+                elBoxKiri.classList.add('score-pop');
+                setTimeout(() => elBoxKiri.classList.remove('score-pop'), 200);
+            }
+            if (state.skorKanan !== currentServerState.skorKanan) {
+                elBoxKanan.classList.add('score-pop');
+                setTimeout(() => elBoxKanan.classList.remove('score-pop'), 200);
+            }
+            
             elSkorKiri.textContent = state.skorKiri;
             elSkorKanan.textContent = state.skorKanan;
             
@@ -303,7 +378,6 @@
                 btnStop.style.display = 'none';
             }
             
-            // PERUBAHAN: Logika Pemenang disederhanakan
             if (state.winnerName && !isWinnerShown) {
                 winnerName.textContent = state.winnerName.toUpperCase();
                 winnerOverlay.style.display = 'flex';
@@ -355,8 +429,8 @@
                 const newState = await response.json();
                 
                 if (JSON.stringify(newState) !== JSON.stringify(currentServerState)) {
+                    updateDisplay(newState); // Panggil update hanya jika ada perubahan
                     currentServerState = newState;
-                    updateDisplay(newState);
                 }
                 
             } catch (error) {
@@ -387,8 +461,10 @@
             kirimRequest(`/api?nama_kanan=${encodeURIComponent(e.target.value)}`);
         };
 
-        setInterval(pollServer, 500);
-        pollServer();
+        // --- INI PERUBAHAN UNTUK DELAY ---
+        // Ganti dari 500 menjadi 200
+        setInterval(pollServer, 200);
+        pollServer(); // Ambil data pertama kali
     </script>
 </body>
 </html>
