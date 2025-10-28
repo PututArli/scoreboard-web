@@ -204,7 +204,9 @@
             transform: translateY(1px);
         }
         
+        /* HAPUS: Style untuk .player-controls tidak diperlukan lagi */
        
+
         #winner-overlay {
             position: fixed;
             top: 0;
@@ -281,7 +283,26 @@
             <button id="btn-reset" class="control-button">RESET ALL</button>
         </div>
         
-        <!-- Tombol manual sudah dihapus -->
+        <!-- ============================================== -->
+        <!-- BAGIAN TOMBOL MANUAL DIHAPUS DARI SINI -->
+        <!-- ============================================== -->
+        <!-- 
+        <div id="player-controls-container" class="controls player-controls" style="margin-top: 0.5rem; justify-content: center; max-width: 100%; margin-left: auto; margin-right: auto; flex-wrap: wrap; gap: 1rem;">
+             <div style="display: flex; gap: 0.5rem; justify-content: center;">
+                <button class="control-button" onclick="kirimRequest('/api?score_kiri=1')">+1</button>
+                ...
+             </div>
+             
+             <div style="display: flex; gap: 0.5rem; justify-content: center;">
+                <button class="control-button" onclick="kirimRequest('/api?score_kanan=3')">+3</button>
+                ...
+             </div>
+        </div> 
+        -->
+        <!-- ============================================== -->
+        <!-- SAMPAI SINI -->
+        <!-- ============================================== -->
+
 
     </div>
 
@@ -307,6 +328,8 @@
         const btnStart = document.getElementById('btn-start');
         const btnStop = document.getElementById('btn-stop'); 
         const btnReset = document.getElementById('btn-reset');
+
+        // HAPUS: elPlayerControls tidak ada lagi
         
         const winnerOverlay = document.getElementById('winner-overlay');
         const winnerName = document.getElementById('winner-name');
@@ -318,12 +341,11 @@
         let pollIntervalId = null; 
         const INITIAL_TIME_MS_FRONTEND = 180 * 1000;
 
-        // --- KEMBALIKAN KE path relatif ---
         async function kirimRequest(path) {
-            // const baseUrl = window.location.origin; // Hapus baseUrl
+            // Gunakan path relatif
             try {
                 // console.log('Mengirim:', path); 
-                await fetch(path); // Gunakan path relatif '/api/...'
+                await fetch(path); 
                 setTimeout(pollServer, 50); 
             } catch (error) {
                 console.error('Gagal kirim request:', error);
@@ -368,6 +390,7 @@
                 }
                 btnStart.style.display = 'none';
                 btnStop.style.display = 'inline-block'; 
+                // HAPUS: Tidak perlu toggle class active lagi
             } else {
                 // Timer sedang pause atau berhenti
                 stopClientTimer(); 
@@ -381,6 +404,7 @@
                     btnStart.style.display = 'none'; 
                     btnStop.style.display = 'none'; 
                 }
+                // HAPUS: Tidak perlu toggle class active lagi
             }
             
             // --- Logika Pemenang ---
@@ -443,13 +467,13 @@
             return `${menit}:${detikStr}<small>${msStr}</small>`;
         }
 
-        // --- KEMBALIKAN KE path relatif ---
+        // Fungsi Polling
         async function pollServer() {
             if (isWinnerShown) return; 
 
-            // const baseUrl = window.location.origin; // Hapus baseUrl
+            // Gunakan path relatif
             try {
-                const response = await fetch('/api?get_state=1'); // Gunakan path relatif
+                const response = await fetch('/api?get_state=1'); 
                 if (!response.ok) {
                      console.error('Network response error:', response.status, response.statusText);
                      elTimer.innerHTML = "ERR"; 
@@ -525,6 +549,7 @@
                 isWinnerShown = false; 
                 elNamaKiri.disabled = false;
                 elNamaKanan.disabled = false;
+                // HAPUS: Tidak ada elPlayerControls lagi
                 btnStart.style.display = 'inline-block'; 
                 btnStop.style.display = 'none'; 
                 currentServerState = {}; 
@@ -546,6 +571,7 @@
              elSkorKanan.textContent = 0;
              elNamaKiri.disabled = false;
              elNamaKanan.disabled = false;
+             // HAPUS: Tidak ada elPlayerControls lagi
              btnStart.style.display = 'inline-block';
              btnStop.style.display = 'none';
              currentServerState = {}; 
@@ -573,6 +599,7 @@
 
         // --- Inisialisasi ---
         elTimer.innerHTML = formatTime(INITIAL_TIME_MS_FRONTEND);
+        // HAPUS: Tidak ada elPlayerControls lagi
         btnStop.style.display = 'none'; 
         startPolling(); 
 
