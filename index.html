@@ -63,7 +63,6 @@
             margin: 0;
         }
         
-        /* Fitur Interaktif: Input Nama */
         .player-name-input {
             font-size: 1.2rem;
             font-weight: 700;
@@ -79,7 +78,7 @@
 
         .score-box {
             width: 100%;
-            padding-top: 100%; /* Membuat kotak 1:1 */
+            padding-top: 100%;
             position: relative;
             border-radius: 20px;
             box-shadow: 0 10px 25px rgba(0, 0, 0, 0.1);
@@ -97,14 +96,14 @@
             display: flex;
             justify-content: center;
             align-items: center;
-            font-size: 15vw; /* Ukuran font responsif */
+            font-size: 15vw;
             font-weight: 900;
             color: white;
         }
         
         @media (min-width: 768px) {
             .score-number {
-                font-size: 10rem; /* Ukuran font tetap di layar besar */
+                font-size: 10rem;
             }
         }
 
@@ -131,7 +130,6 @@
             min-width: 300px;
         }
 
-        /* Fitur Interaktif: Tombol Kontrol */
         .controls {
             margin-top: 1.5rem;
             display: flex;
@@ -159,7 +157,6 @@
             transform: translateY(-2px);
         }
 
-        /* Fitur Interaktif: Notifikasi Pemenang */
         #winner-overlay {
             position: fixed;
             top: 0;
@@ -167,7 +164,7 @@
             width: 100%;
             height: 100%;
             background-color: rgba(0, 0, 0, 0.8);
-            display: none; /* Sembunyi by default */
+            display: none;
             justify-content: center;
             align-items: center;
             z-index: 1000;
@@ -258,45 +255,36 @@
 
 
     <script>
-        // --- Ambil Elemen DOM ---
         const elSkorKiri = document.getElementById('skor-kiri-text');
         const elSkorKanan = document.getElementById('skor-kanan-text');
         const elTimer = document.getElementById('timer-text');
         const elNamaKiri = document.getElementById('nama-kiri-input');
         const elNamaKanan = document.getElementById('nama-kanan-input');
         
-        // Tombol Kontrol
         const btnStart = document.getElementById('btn-start');
         const btnStop = document.getElementById('btn-stop');
         const btnReset = document.getElementById('btn-reset');
         
-        // Notifikasi Pemenang
         const winnerOverlay = document.getElementById('winner-overlay');
         const winnerName = document.getElementById('winner-name');
         const btnCloseWinner = document.getElementById('btn-close-winner');
 
-        let currentServerState = {}; // Menyimpan state terakhir dari server
-        let clientTimerInterval = null; // ID untuk interval timer di sisi client
-        let isWinnerShown = false; // Mencegah notif muncul terus
+        let currentServerState = {};
+        let clientTimerInterval = null;
+        let isWinnerShown = false;
 
-        // --- Fungsi Kirim Request ke API ---
         async function kirimRequest(path) {
             try {
-                // Kita tidak perlu menunggu balasan, cukup kirim
-                // Server akan update, dan polling akan mengambil datanya
                 fetch(path); 
             } catch (error) {
                 console.error('Gagal kirim request:', error);
             }
         }
         
-        // --- Fungsi Update Tampilan ---
         function updateDisplay(state) {
-            // 1. Update Skor
             elSkorKiri.textContent = state.skorKiri;
             elSkorKanan.textContent = state.skorKanan;
             
-            // 2. Update Nama (hanya jika tidak sedang diketik)
             if (document.activeElement !== elNamaKiri) {
                 elNamaKiri.value = state.namaKiri || "PEMAIN 1";
             }
@@ -304,47 +292,41 @@
                 elNamaKanan.value = state.namaKanan || "PEMAIN 2";
             }
 
-            // 3. Update Timer
             if (state.timerRunning) {
-                // Jika timer JALAN, mulai timer di sisi client
-                // untuk update tampilan yang mulus
                 startClientTimer(state.lastStartTime, state.elapsedTime);
+                btnStart.style.display = 'none';
+                btnStop.style.display = 'inline-block';
             } else {
-                // Jika timer BERHENTI, hentikan timer client
                 stopClientTimer();
-                // Tampilkan waktu terakhir yang tersimpan
                 elTimer.innerHTML = formatTime(state.elapsedTime);
+                btnStart.style.display = 'inline-block';
+                btnStop.style.display = 'none';
             }
             
-            // 4. Cek Pemenang (jika skor 10 atau lebih dan notif belum muncul)
-            if (!isWinnerShown && (state.skorKiri >= 10 || state.skorKanan >= 10)) {
-                // Tentukan pemenang
-                let namaPemenang = (state.skorKiri >= 10) ? state.namaKiri : state.namaKanan;
-                
-                // Set nama di notifikasi
-                winnerName.textContent = namaPemenang.toUpperCase();
-                
-                // Tampilkan overlay
+            // PERUBAHAN: Logika Pemenang disederhanakan
+            if (state.winnerName && !isWinnerShown) {
+                winnerName.textContent = state.winnerName.toUpperCase();
                 winnerOverlay.style.display = 'flex';
                 isWinnerShown = true;
-                
-                // Otomatis stop timer
-                kirimRequest('/api?stop_timer=1');
+            }
+            
+            if (state.winnerName) {
+                elNamaKiri.disabled = true;
+                elNamaKanan.disabled = true;
+            } else {
+                elNamaKiri.disabled = false;
+                elNamaKanan.disabled = false;
             }
         }
         
-        // --- Fungsi Timer di Sisi Client ---
         function startClientTimer(serverLastStartTime, serverElapsedTime) {
-            // Hentikan timer lama jika ada
             if (clientTimerInterval) clearInterval(clientTimerInterval);
             
-            // Mulai timer baru
             clientTimerInterval = setInterval(() => {
-                // Hitung total waktu yang sudah berjalan
                 const now = Date.now();
                 const totalElapsed = serverElapsedTime + (now - serverLastStartTime);
                 elTimer.innerHTML = formatTime(totalElapsed);
-            }, 50); // Update setiap 50ms untuk .xx
+            }, 50);
         }
         
         function stopClientTimer() {
@@ -354,19 +336,17 @@
             }
         }
         
-        // --- Fungsi Format Waktu M:SS.ss ---
         function formatTime(ms) {
             const totalDetik = Math.floor(ms / 1000);
             const menit = Math.floor(totalDetik / 60);
             const detik = totalDetik % 60;
-            const milidetik = Math.floor((ms % 1000) / 10); // Ambil 2 digit
+            const milidetik = Math.floor((ms % 1000) / 10);
 
             const pad = (num, length = 2) => String(num).padStart(length, '0');
 
             return `${menit}:${pad(detik)}<small>${pad(milidetik)}</small>`;
         }
 
-        // --- Fungsi Polling (Mengambil data dari server) ---
         async function pollServer() {
             try {
                 const response = await fetch('/api?get_state=1');
@@ -374,7 +354,6 @@
                 
                 const newState = await response.json();
                 
-                // Hanya update jika datanya beda
                 if (JSON.stringify(newState) !== JSON.stringify(currentServerState)) {
                     currentServerState = newState;
                     updateDisplay(newState);
@@ -385,26 +364,22 @@
             }
         }
 
-        // --- Event Listeners untuk Tombol & Input ---
         btnStart.onclick = () => kirimRequest('/api?start_timer=1');
         btnStop.onclick = () => kirimRequest('/api?stop_timer=1');
         btnReset.onclick = () => {
             if (confirm('Anda yakin ingin RESET semua skor dan waktu?')) {
                 kirimRequest('/api?reset_skor=1');
-                winnerOverlay.style.display = 'none'; // Sembunyikan notif
-                isWinnerShown = false; // Reset status notif
+                winnerOverlay.style.display = 'none';
+                isWinnerShown = false;
             }
         };
         
-        // Tombol tutup notifikasi pemenang
         btnCloseWinner.onclick = () => {
              winnerOverlay.style.display = 'none';
-             // Reset skor & waktu setelah notif ditutup
              kirimRequest('/api?reset_skor=1');
              isWinnerShown = false;
         };
         
-        // Update nama saat selesai mengetik (onchange)
         elNamaKiri.onchange = (e) => {
             kirimRequest(`/api?nama_kiri=${encodeURIComponent(e.target.value)}`);
         };
@@ -412,12 +387,8 @@
             kirimRequest(`/api?nama_kanan=${encodeURIComponent(e.target.value)}`);
         };
 
-        // --- Mulai Polling ---
-        // Mulai polling data dari server setiap 500ms (setengah detik)
         setInterval(pollServer, 500);
-        // Langsung ambil data pertama kali saat halaman dimuat
         pollServer();
-
     </script>
 </body>
 </html>
