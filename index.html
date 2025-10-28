@@ -8,7 +8,6 @@
     <link href="https://fonts.googleapis.com/css2?family=Roboto:wght@400;700;900&family=Orbitron:wght@700&display=swap" rel="stylesheet">
     
     <style>
-        /* BARU: CSS Reset & Font Global */
         :root {
             --color-red: #E53935;
             --color-red-dark: #C62828;
@@ -18,7 +17,6 @@
             --color-light: #FAFAFA;
             --color-accent: #00BCD4;
             
-            /* Font utama */
             font-family: 'Roboto', sans-serif;
             font-synthesis: none;
             text-rendering: optimizeLegibility;
@@ -33,7 +31,6 @@
             padding: 0;
         }
 
-        /* BARU: Latar belakang Gradient & Perbaikan Bug Layar Penuh */
         body {
             background: linear-gradient(135deg, #f5f7fa 0%, #c3cfe2 100%);
             color: var(--color-dark);
@@ -41,7 +38,7 @@
             flex-direction: column;
             justify-content: center;
             align-items: center;
-            min-height: 100vh; /* Pastikan full di layar */
+            min-height: 100vh;
             padding: 1rem;
         }
 
@@ -52,7 +49,6 @@
             padding: 1rem;
         }
 
-        /* BARU: Desain Header (lebih bulat) */
         .header {
             background-color: var(--color-accent);
             color: white;
@@ -68,12 +64,11 @@
         .scoreboard {
             display: flex;
             justify-content: space-around;
-            align-items: stretch; /* Membuat kolom sama tinggi */
+            align-items: stretch;
             width: 100%;
             gap: 1.5rem;
         }
 
-        /* BARU: Desain Kartu Pemain (lebih bagus) */
         .player {
             flex: 1;
             background: #FFFFFF;
@@ -105,11 +100,11 @@
 
         .score-box {
             width: 100%;
-            padding-top: 100%; /* Membuat kotak 1:1 */
+            padding-top: 100%;
             position: relative;
             border-radius: 20px;
             box-shadow: inset 0 4px 10px rgba(0, 0, 0, 0.1);
-            transition: transform 0.2s ease-out; /* Untuk animasi pop */
+            transition: transform 0.2s ease-out;
         }
         
         #score-kiri { background-color: var(--color-red); }
@@ -125,16 +120,13 @@
             justify-content: center;
             align-items: center;
             
-            /* BARU: Font digital + PERBAIKAN BUG ZOOM OUT */
             font-family: 'Orbitron', sans-serif;
-            /* clamp(min, preferred, max) */
             font-size: clamp(6rem, 20vw, 12rem);
             font-weight: 700;
             color: white;
             text-shadow: 0 4px 10px rgba(0, 0, 0, 0.2);
         }
         
-        /* BARU: Animasi "Pop" saat skor berubah */
         .score-pop {
             animation: pop 0.2s ease-out;
         }
@@ -156,12 +148,10 @@
             width: 100%;
         }
 
-        /* BARU: Desain Timer (Font + Perbaikan Bug) */
         .timer {
             background-color: var(--color-dark);
             color: white;
             font-family: 'Orbitron', sans-serif;
-            /* clamp(min, preferred, max) */
             font-size: clamp(3rem, 12vw, 5.5rem);
             font-weight: 700;
             padding: 1.5rem 2rem;
@@ -169,7 +159,7 @@
             display: inline-block;
             box-shadow: 0 4px 20px rgba(0, 0, 0, 0.2);
             width: 100%;
-            max-width: 500px; /* Batasi lebar max timer */
+            max-width: 500px;
         }
         .timer small {
             font-size: clamp(1.5rem, 6vw, 2.5rem);
@@ -183,7 +173,6 @@
             flex-wrap: wrap;
         }
         
-        /* BARU: Desain Tombol (lebih modern) */
         .control-button {
             font-size: 1rem;
             font-weight: 700;
@@ -206,7 +195,6 @@
             transform: translateY(1px);
         }
         
-        /* Tombol + / - skor manual */
         .player-controls .control-button {
             background-color: #f0f0f0;
             color: #333;
@@ -215,7 +203,6 @@
             background-color: #e0e0e0;
         }
 
-        /* BARU: Desain Notifikasi Pemenang */
         #winner-overlay {
             position: fixed;
             top: 0;
@@ -271,7 +258,8 @@
                 </div>
             </div>
 
-            <div classs="vs">VS</div>
+            <!-- PERBAIKAN BUG ZOOM: 'classs' diubah menjadi 'class' -->
+            <div class="vs">VS</div>
 
             <div class="player">
                 <input type="text" id="nama-kanan-input" class="player-name-input" value="PEMAIN 2">
@@ -298,11 +286,14 @@
                 <button class="control-button" onclick="kirimRequest('/api?score_kiri=2')">+2</button>
                 <button class="control-button" onclick="kirimRequest('/api?score_kiri=3')">+3</button>
              </div>
+             
+             <!-- PERUBAHAN URUTAN TOMBOL KANAN -->
              <div style="display: flex; gap: 0.5rem;">
-                <button class="control-button" onclick="kirimRequest('/api?score_kanan=1')">+1</button>
-                <button class="control-button" onclick="kirimRequest('/api?score_kanan=2')">+2</button>
                 <button class="control-button" onclick="kirimRequest('/api?score_kanan=3')">+3</button>
+                <button class="control-button" onclick="kirimRequest('/api?score_kanan=2')">+2</button>
+                <button class="control-button" onclick="kirimRequest('/api?score_kanan=1')">+1</button>
              </div>
+             <!-- BATAS PERUBAHAN -->
         </div>
 
     </div>
@@ -347,7 +338,6 @@
         }
         
         function updateDisplay(state) {
-            // BARU: Cek skor mana yang berubah untuk animasi
             if (state.skorKiri !== currentServerState.skorKiri) {
                 elBoxKiri.classList.add('score-pop');
                 setTimeout(() => elBoxKiri.classList.remove('score-pop'), 200);
@@ -429,7 +419,7 @@
                 const newState = await response.json();
                 
                 if (JSON.stringify(newState) !== JSON.stringify(currentServerState)) {
-                    updateDisplay(newState); // Panggil update hanya jika ada perubahan
+                    updateDisplay(newState);
                     currentServerState = newState;
                 }
                 
@@ -461,10 +451,9 @@
             kirimRequest(`/api?nama_kanan=${encodeURIComponent(e.target.value)}`);
         };
 
-        // --- INI PERUBAHAN UNTUK DELAY ---
-        // Ganti dari 500 menjadi 200
+        // Polling Cepat
         setInterval(pollServer, 200);
-        pollServer(); // Ambil data pertama kali
+        pollServer();
     </script>
 </body>
 </html>
