@@ -329,9 +329,11 @@
         let clientTimerInterval = null;
         let isWinnerShown = false;
 
+        // --- PERBAIKAN FETCH URL ---
         async function kirimRequest(path) {
+            const baseUrl = window.location.origin; // Mendapatkan alamat dasar (cth: https://...)
             try {
-                fetch(path); 
+                fetch(`${baseUrl}${path}`); // Menggunakan URL lengkap
             } catch (error) {
                 console.error('Gagal kirim request:', error);
             }
@@ -411,9 +413,11 @@
             return `${menit}:${pad(detik)}<small>${pad(milidetik)}</small>`;
         }
 
+        // --- PERBAIKAN FETCH URL ---
         async function pollServer() {
+            const baseUrl = window.location.origin; // Mendapatkan alamat dasar
             try {
-                const response = await fetch('/api?get_state=1');
+                const response = await fetch(`${baseUrl}/api?get_state=1`); // Menggunakan URL lengkap
                 if (!response.ok) throw new Error('Network response was not ok');
                 
                 const newState = await response.json();
