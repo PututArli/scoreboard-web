@@ -1,0 +1,7 @@
+{
+  "name": "proteus-scoreboard-server",
+  "version": "1.0.0",
+  "dependencies": {
+    "@vercel/kv": "latest"
+  }
+}
