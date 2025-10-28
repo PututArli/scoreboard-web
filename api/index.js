@@ -3,7 +3,7 @@ import { kv } from '@vercel/kv';
 const STATE_KEY = 'scoreboard_state';
 const INITIAL_TIME_MS = 180 * 1000; // 3 menit
 
-// Fungsi cek pemenang
+// Fungsi cek pemenang (disederhanakan)
 function cekPemenang(state) {
   if (state.winnerName) return state.winnerName;
   const skorKiri = parseInt(state.skorKiri) || 0;
@@ -36,7 +36,6 @@ const getDefaultState = () => ({
     winnerName: null
 });
 
-
 export default async function handler(req, res) {
   const handlerStartTime = Date.now();
   console.log(`[API] Request: ${req.url}`);
@@ -48,109 +47,125 @@ export default async function handler(req, res) {
     if (!state || typeof state.remainingTime !== 'number' || isNaN(state.remainingTime)) {
       console.log("[API] State awal tidak valid/kosong -> Reset ke default.");
       state = getDefaultState();
-      await kv.set(STATE_KEY, state);
+      // Jangan langsung simpan, biarkan proses di bawah yg simpan jika ada perubahan
     } else {
+      // Pastikan field penting ada & valid
+      state = { ...getDefaultState(), ...state }; // Gabungkan dengan default untuk pastikan semua field ada
       state.skorKiri = parseInt(state.skorKiri) || 0;
       state.skorKanan = parseInt(state.skorKanan) || 0;
-      state.namaKiri = state.namaKiri || "PEMAIN 1";
-      state.namaKanan = state.namaKanan || "PEMAIN 2";
       state.timerRunning = state.timerRunning === true;
       state.remainingTime = (typeof state.remainingTime === 'number' && !isNaN(state.remainingTime)) ? state.remainingTime : INITIAL_TIME_MS;
       state.lastStartTime = parseInt(state.lastStartTime) || 0;
-      state.winnerName = state.winnerName || null;
     }
-    // console.log("[API] State AWAL:", JSON.stringify(state));
+    console.log("[API] State AWAL:", JSON.stringify(state));
+
 
     let stateChanged = false;
     const now = Date.now();
 
-    // --- Hitung Sisa Waktu Saat Ini ---
+    // --- Hitung Sisa Waktu Saat Ini (harus dihitung SEBELUM proses input) ---
     let currentRemainingTime = state.remainingTime;
     if (state.timerRunning && !state.winnerName && state.lastStartTime > 0) {
          const elapsedSinceStart = now - state.lastStartTime;
          currentRemainingTime = Math.max(0, state.remainingTime - elapsedSinceStart);
          if (currentRemainingTime <= 0 && state.remainingTime > 0) {
-             console.log("[TIMER] Waktu habis saat timer berjalan.");
-             state.timerRunning = false;
-             state.remainingTime = 0;
-             state.lastStartTime = 0;
-             stateChanged = true;
-             currentRemainingTime = 0;
+             console.log("[TIMER] Waktu habis saat timer berjalan (di perhitungan awal).");
+             // JANGAN ubah state di sini, biarkan cek pemenang yg handle
          }
     }
-    currentRemainingTime = (typeof currentRemainingTime === 'number' && !isNaN(currentRemainingTime)) ? currentRemainingTime : (state.remainingTime ?? 0);
+    // Final check agar tidak NaN
+    currentRemainingTime = (typeof currentRemainingTime === 'number' && !isNaN(currentRemainingTime)) ? currentRemainingTime : 0;
     // console.log(`[TIMER] CurrentRemainingTime dihitung: ${currentRemainingTime}`);
 
 
-    // --- Pemrosesan Input Skor (LANGSUNG) ---
-    const skorKiriInput = parseInt(q.score_kiri);
-    const skorKananInput = parseInt(q.score_kanan);
-    // PENYEDERHANAAN KONDISI: Cukup cek timerRunning & !winnerName
-    if (state.timerRunning && !state.winnerName) {
-        if (!isNaN(skorKiriInput) && skorKiriInput > 0) {
-             state.skorKiri += skorKiriInput; stateChanged = true;
-             console.log(`[SKOR] Kiri +${skorKiriInput} -> ${state.skorKiri}`);
-        } else if (!isNaN(skorKananInput) && skorKananInput > 0) {
-             state.skorKanan += skorKananInput; stateChanged = true;
-             console.log(`[SKOR] Kanan +${skorKananInput} -> ${state.skorKanan}`);
+    // --- Pemrosesan Input (Hanya jika belum ada pemenang) ---
+    if (!state.winnerName) {
+        // Skor (HANYA jika timer jalan & waktu > 0)
+        const skorKiriInput = parseInt(q.score_kiri);
+        const skorKananInput = parseInt(q.score_kanan);
+        if (state.timerRunning && currentRemainingTime > 0) {
+            if (!isNaN(skorKiriInput) && skorKiriInput > 0) {
+                 state.skorKiri += skorKiriInput; stateChanged = true;
+                 console.log(`[SKOR] Kiri +${skorKiriInput} -> ${state.skorKiri}`);
+            } else if (!isNaN(skorKananInput) && skorKananInput > 0) {
+                 state.skorKanan += skorKananInput; stateChanged = true;
+                 console.log(`[SKOR] Kanan +${skorKananInput} -> ${state.skorKanan}`);
+            }
+        } else if (!isNaN(skorKiriInput) || !isNaN(skorKananInput)) {
+             console.log("[SKOR] Input skor diabaikan (timer off / waktu habis).");
         }
-    } else if (!isNaN(skorKiriInput) || !isNaN(skorKananInput)) {
-         console.log("[SKOR] Input skor diabaikan (timer off / ada pemenang).");
-    }
 
-    // --- Pemrosesan Input Nama ---
-    if (!state.timerRunning && !state.winnerName) {
-        if (q.nama_kiri) { state.namaKiri = q.nama_kiri; stateChanged = true; }
-        if (q.nama_kanan) { state.namaKanan = q.nama_kanan; stateChanged = true; }
-    }
+        // Nama (Hanya jika timer TIDAK jalan)
+        if (!state.timerRunning) {
+            if (q.nama_kiri) { state.namaKiri = q.nama_kiri; stateChanged = true; }
+            if (q.nama_kanan) { state.namaKanan = q.nama_kanan; stateChanged = true; }
+        }
 
-    // --- Logika Timer Control ---
-    // START / RESUME
-    if (q.start_timer || (q.toggle_timer && !state.timerRunning)) {
-        console.log("[TIMER] Input: START/TOGGLE-ON");
-        if (!state.timerRunning && state.remainingTime > 0 && !state.winnerName) {
-            state.timerRunning = true;
-            state.lastStartTime = now;
-            stateChanged = true;
-            console.log("  -> Action: START/RESUME. Sisa sebelum start:", state.remainingTime);
-        } else { console.log("  -> Action: START/TOGGLE-ON diabaikan."); }
-    }
-    // PAUSE / TOGGLE OFF
-    else if (q.stop_timer || (q.toggle_timer && state.timerRunning)) {
-        console.log("[TIMER] Input: PAUSE/TOGGLE-OFF");
-        if (state.timerRunning && !state.winnerName) {
-            state.timerRunning = false;
-            const elapsedSinceStart = now - state.lastStartTime;
-            let newRemaining = state.remainingTime;
-            if (state.lastStartTime > 0 && typeof elapsedSinceStart === 'number' && !isNaN(elapsedSinceStart)) {
-                newRemaining = Math.max(0, state.remainingTime - elapsedSinceStart);
-            } else { console.error("[TIMER] Gagal hitung elapsed saat PAUSE"); }
-            state.remainingTime = (typeof newRemaining === 'number' && !isNaN(newRemaining)) ? newRemaining : 0;
-            state.lastStartTime = 0;
-            stateChanged = true;
-            console.log("  -> Action: PAUSE. Sisa disimpan:", state.remainingTime);
-            currentRemainingTime = state.remainingTime;
-        } else { console.log("  -> Action: PAUSE/TOGGLE-OFF diabaikan."); }
-    }
+        // --- Logika Timer Control ---
+        // START / RESUME
+        if (q.start_timer || (q.toggle_timer && !state.timerRunning)) {
+            console.log("[TIMER] Input: START/TOGGLE-ON");
+            // Cek lagi kondisi waktu tersisa > 0
+            if (!state.timerRunning && state.remainingTime > 0) {
+                state.timerRunning = true;
+                state.lastStartTime = now;
+                // remainingTime TIDAK diubah
+                stateChanged = true;
+                console.log("  -> Action: START/RESUME. Sisa sebelum:", state.remainingTime);
+            } else { console.log("  -> Action: START/TOGGLE-ON diabaikan."); }
+        }
+        // PAUSE / TOGGLE OFF
+        else if (q.stop_timer || (q.toggle_timer && state.timerRunning)) {
+            console.log("[TIMER] Input: PAUSE/TOGGLE-OFF");
+            if (state.timerRunning) {
+                state.timerRunning = false;
+                const elapsedSinceStart = now - state.lastStartTime;
+                let newRemaining = state.remainingTime; // Default
+                if (state.lastStartTime > 0 && typeof elapsedSinceStart === 'number' && !isNaN(elapsedSinceStart)) {
+                    newRemaining = Math.max(0, state.remainingTime - elapsedSinceStart);
+                } else { console.error("[TIMER] Gagal hitung elapsed saat PAUSE"); }
+                // Simpan sisa waktu yang valid
+                state.remainingTime = (typeof newRemaining === 'number' && !isNaN(newRemaining)) ? newRemaining : 0;
+                state.lastStartTime = 0; // Reset lastStartTime
+                stateChanged = true;
+                console.log("  -> Action: PAUSE. Sisa disimpan:", state.remainingTime);
+                currentRemainingTime = state.remainingTime; // Update current time
+            } else { console.log("  -> Action: PAUSE/TOGGLE-OFF diabaikan."); }
+        }
+    } // Akhir blok if (!state.winnerName)
 
-    // --- Logika Reset ---
+
+    // --- Logika Reset (bisa kapan saja) ---
     if (q.reset_skor) {
       console.log("[RESET] Input: reset_skor");
       state = getDefaultState();
       stateChanged = true;
-      await kv.del('referee_inputs').catch(err => console.warn("Gagal hapus INPUT_KEY saat reset:", err));
+      await kv.del('referee_inputs').catch(err => console.warn("Gagal hapus INPUT_KEY:", err)); // Hapus key wasit lama jika ada
       currentRemainingTime = state.remainingTime;
       console.log("  -> Action: State direset.");
     }
 
-    // --- Cek Pemenang ---
-     if (!state.timerRunning && stateChanged && currentRemainingTime <= 0) {
-        if(state.remainingTime > 0) state.remainingTime = 0;
+    // --- Update state.remainingTime JIKA waktu habis saat timer jalan ---
+     if (state.timerRunning && !state.winnerName && state.lastStartTime > 0) {
+         const elapsed = now - state.lastStartTime;
+         const checkRemaining = Math.max(0, state.remainingTime - elapsed);
+         if (checkRemaining <= 0 && state.remainingTime > 0) {
+             console.log("[TIMER] Waktu terdeteksi habis saat cek akhir.");
+             state.timerRunning = false;
+             state.remainingTime = 0; // Simpan 0
+             state.lastStartTime = 0;
+             currentRemainingTime = 0; // Pastikan current juga 0
+             stateChanged = true; // Tandai perubahan
+         }
      }
+
+
+    // --- Cek Pemenang ---
     const pemenang = cekPemenang(state);
     if (pemenang && !state.winnerName) {
         console.log("[PEMENANG] Ditemukan:", pemenang);
         state.winnerName = pemenang;
+        // Jika timer masih jalan saat menang, hentikan & simpan waktu sisa
         if (state.timerRunning) {
              state.timerRunning = false;
              const elapsedSinceStart = now - state.lastStartTime;
@@ -160,7 +175,7 @@ export default async function handler(req, res) {
              }
              state.remainingTime = (typeof finalRemaining === 'number' && !isNaN(finalRemaining)) ? finalRemaining : 0;
              state.lastStartTime = 0;
-             currentRemainingTime = state.remainingTime;
+             currentRemainingTime = state.remainingTime; // Update current time
              console.log("  -> Timer dihentikan. Sisa waktu:", state.remainingTime);
         }
         stateChanged = true;
@@ -168,13 +183,15 @@ export default async function handler(req, res) {
 
     // --- Simpan State jika Berubah ---
     if (stateChanged) {
-      state.remainingTime = (typeof state.remainingTime === 'number' && !isNaN(state.remainingTime)) ? Math.min(INITIAL_TIME_MS, state.remainingTime) : 0;
+      // Validasi terakhir sebelum simpan
+      state.remainingTime = (typeof state.remainingTime === 'number' && !isNaN(state.remainingTime)) ? Math.max(0, Math.min(INITIAL_TIME_MS, state.remainingTime)) : 0;
       state.lastStartTime = parseInt(state.lastStartTime) || 0;
       state.skorKiri = parseInt(state.skorKiri) || 0;
       state.skorKanan = parseInt(state.skorKanan) || 0;
+      state.timerRunning = state.timerRunning === true; // Pastikan boolean
 
       await kv.set(STATE_KEY, state);
-      // console.log("[API] State disimpan:", JSON.stringify(state));
+      console.log("[API] State disimpan:", JSON.stringify(state));
     }
 
     // --- Kirim Respons ---
