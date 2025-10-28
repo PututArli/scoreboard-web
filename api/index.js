@@ -39,18 +39,17 @@ const getDefaultState = () => ({
 
 export default async function handler(req, res) {
   const handlerStartTime = Date.now();
-  console.log(`[API V4] Request: ${req.url}`);
+  console.log(`[API V5 FORCE START] Request: ${req.url}`); // Tambah V5
   const q = req.query;
 
   try {
     let state = await kv.get(STATE_KEY);
     // Validasi state awal
     if (!state || typeof state.remainingTime !== 'number' || isNaN(state.remainingTime)) {
-      console.log("[API V4] State awal tidak valid/kosong -> Reset ke default.");
+      console.log("[API V5] State awal tidak valid/kosong -> Reset ke default.");
       state = getDefaultState();
       await kv.set(STATE_KEY, state); 
     } else {
-      // Pastikan semua field ada & valid
       state = { ...getDefaultState(), ...state }; 
       state.skorKiri = parseInt(state.skorKiri) || 0;
       state.skorKanan = parseInt(state.skorKanan) || 0;
@@ -60,7 +59,7 @@ export default async function handler(req, res) {
       state.lastStartTime = parseInt(state.lastStartTime) || 0;
       state.winnerName = state.winnerName || null;
     }
-    // console.log("[API V4] State AWAL Valid:", JSON.stringify(state));
+    console.log("[API V5] State AWAL Valid:", JSON.stringify(state));
 
     let stateChanged = false;
     const now = Date.now();
@@ -71,7 +70,7 @@ export default async function handler(req, res) {
          const elapsedSinceStart = now - state.lastStartTime;
          currentRemainingTime = Math.max(0, state.remainingTime - elapsedSinceStart); 
          if (currentRemainingTime <= 0 && state.remainingTime > 0) {
-             console.log("[TIMER V4] Waktu habis saat timer berjalan.");
+             console.log("[TIMER V5] Waktu habis saat timer berjalan.");
              state.timerRunning = false;
              state.remainingTime = 0; 
              state.lastStartTime = 0; 
@@ -80,7 +79,7 @@ export default async function handler(req, res) {
          }
     }
     currentRemainingTime = (typeof currentRemainingTime === 'number' && !isNaN(currentRemainingTime)) ? Math.max(0, currentRemainingTime) : 0;
-    // console.log(`[TIMER V4] CurrentRemainingTime dihitung: ${currentRemainingTime}`);
+    // console.log(`[TIMER V5] CurrentRemainingTime dihitung: ${currentRemainingTime}`);
 
 
     // --- Pemrosesan Input (Hanya jika belum ada pemenang) ---
@@ -91,13 +90,13 @@ export default async function handler(req, res) {
         if (state.timerRunning && currentRemainingTime > 0) { 
             if (!isNaN(skorKiriInput) && skorKiriInput > 0) {
                  state.skorKiri += skorKiriInput; stateChanged = true;
-                 console.log(`[SKOR V4] Kiri +${skorKiriInput} -> ${state.skorKiri}`);
+                 console.log(`[SKOR V5] Kiri +${skorKiriInput} -> ${state.skorKiri}`);
             } else if (!isNaN(skorKananInput) && skorKananInput > 0) {
                  state.skorKanan += skorKananInput; stateChanged = true;
-                 console.log(`[SKOR V4] Kanan +${skorKananInput} -> ${state.skorKanan}`);
+                 console.log(`[SKOR V5] Kanan +${skorKananInput} -> ${state.skorKanan}`);
             }
         } else if (!isNaN(skorKiriInput) || !isNaN(skorKananInput)) {
-             console.log("[SKOR V4] Input skor diabaikan.");
+             console.log("[SKOR V5] Input skor diabaikan.");
         }
 
         // Nama (Hanya jika timer TIDAK jalan)
@@ -109,11 +108,11 @@ export default async function handler(req, res) {
         // --- Logika Timer Control ---
         // START / RESUME (Toggle ON)
         if (q.start_timer || (q.toggle_timer && !state.timerRunning)) {
-            console.log("[TIMER V4] Input: START/TOGGLE-ON");
+            console.log("[TIMER V5] Input: START/TOGGLE-ON");
             // Cek kondisi BUKAN sedang jalan & BELUM menang
-            // Perubahan Utama: Abaikan state.remainingTime saat START
             if (!state.timerRunning && !state.winnerName) { 
-                 console.log("  -> Action: START/RESET WAKTU KE 3 MENIT.");
+                 // **** PERUBAHAN UTAMA: SELALU RESET WAKTU SAAT START ****
+                 console.log("  -> Action: PAKSA START DARI 3 MENIT.");
                  state.timerRunning = true;
                  state.lastStartTime = now; // Catat waktu mulai SEKARANG
                  state.remainingTime = INITIAL_TIME_MS; // PAKSA mulai dari 3 menit
@@ -125,18 +124,21 @@ export default async function handler(req, res) {
         }
         // PAUSE / TOGGLE OFF
         else if (q.stop_timer || (q.toggle_timer && state.timerRunning)) {
-            console.log("[TIMER V4] Input: PAUSE/TOGGLE-OFF");
+            console.log("[TIMER V5] Input: PAUSE/TOGGLE-OFF");
             if (state.timerRunning) { // Hanya pause jika sedang jalan
                 state.timerRunning = false;
-                // Hitung sisa waktu saat ini dan SIMPAN
                 const elapsedSinceStart = now - state.lastStartTime;
                 let newRemaining = state.remainingTime; // Default
+                // Hitung sisa waktu berdasarkan WAKTU AWAL (karena start selalu reset)
                 if (state.lastStartTime > 0 && typeof elapsedSinceStart === 'number' && !isNaN(elapsedSinceStart)) {
-                    // Gunakan INITIAL_TIME_MS sebagai basis jika baru dimulai, atau state.remainingTime jika resume
-                    const baseTime = (state.remainingTime === INITIAL_TIME_MS && state.lastStartTime > 0) ? INITIAL_TIME_MS : state.remainingTime; 
-                    newRemaining = Math.max(0, baseTime - elapsedSinceStart); 
-                     // Logika lama (mungkin salah jika resume): newRemaining = Math.max(0, state.remainingTime - elapsedSinceStart);
-                } else { console.error("[TIMER V4] Gagal hitung elapsed saat PAUSE"); }
+                     // Hitung sisa = Awal - Berlalu
+                     // Jika baseTime bukan INITIAL_TIME_MS, ada yg aneh, tapi kita coba pakai itu
+                     const baseTime = (state.remainingTime === INITIAL_TIME_MS) ? INITIAL_TIME_MS : state.remainingTime;
+                     // newRemaining = Math.max(0, baseTime - elapsedSinceStart); // INI YG MUNGKIN BIKIN ERROR SEBELUMNYA
+                     // Hitung sisa = Sisa_Sebelumnya - Berlalu_Sejak_Start_Terakhir
+                      newRemaining = Math.max(0, state.remainingTime - elapsedSinceStart);
+
+                } else { console.error("[TIMER V5] Gagal hitung elapsed saat PAUSE"); }
                 
                 state.remainingTime = (typeof newRemaining === 'number' && !isNaN(newRemaining)) ? newRemaining : 0; 
                 state.lastStartTime = 0; // Reset lastStartTime
@@ -150,7 +152,7 @@ export default async function handler(req, res) {
 
     // --- Logika Reset ---
     if (q.reset_skor) {
-      console.log("[RESET V4] Input: reset_skor");
+      console.log("[RESET V5] Input: reset_skor");
       state = getDefaultState(); 
       stateChanged = true;
       await kv.del('referee_inputs').catch(err => console.warn("Gagal hapus INPUT_KEY:", err)); 
@@ -160,7 +162,7 @@ export default async function handler(req, res) {
 
     // --- Cek Pemenang ---
      if (state.timerRunning && currentRemainingTime <= 0 && state.remainingTime > 0) {
-         console.log("[TIMER V4] Waktu terdeteksi habis saat cek akhir.");
+         console.log("[TIMER V5] Waktu terdeteksi habis saat cek akhir.");
          state.timerRunning = false;
          state.remainingTime = 0; 
          state.lastStartTime = 0;
@@ -168,7 +170,7 @@ export default async function handler(req, res) {
      }
     const pemenang = cekPemenang(state, currentRemainingTime); 
     if (pemenang && !state.winnerName) { 
-        console.log("[PEMENANG V4] Ditemukan:", pemenang);
+        console.log("[PEMENANG V5] Ditemukan:", pemenang);
         state.winnerName = pemenang;
         if (state.timerRunning) {
              console.log("  -> Timer sedang jalan -> Hentikan.");
@@ -176,7 +178,7 @@ export default async function handler(req, res) {
              // Gunakan currentRemainingTime yang sudah dihitung
              state.remainingTime = currentRemainingTime > 0 ? currentRemainingTime : 0; 
              state.lastStartTime = 0;
-             currentRemainingTime = state.remainingTime; 
+             currentRemainingTime = state.remainingTime; // Update current time
              console.log("  -> Sisa waktu:", state.remainingTime);
         } else if (currentRemainingTime <= 0 && state.remainingTime > 0) {
              state.remainingTime = 0; // Pastikan 0 jika menang karena waktu habis
@@ -196,9 +198,9 @@ export default async function handler(req, res) {
 
       try {
           await kv.set(STATE_KEY, state);
-          console.log("[API V4] State disimpan:", JSON.stringify(state));
+          console.log("[API V5] State disimpan:", JSON.stringify(state));
       } catch (kvError) {
-           console.error("[API V4] Gagal menyimpan state ke KV:", kvError);
+           console.error("[API V5] Gagal menyimpan state ke KV:", kvError);
            return res.status(500).json({ error: 'KV Set Error', details: kvError.message });
       }
     }
@@ -212,22 +214,22 @@ export default async function handler(req, res) {
         namaKanan: state.namaKanan,
         timerRunning: state.timerRunning,
         remainingTime: state.remainingTime, 
-        lastStartTime: state.lastStartTime, // Kirim lastStartTime agar client bisa hitung
+        lastStartTime: state.lastStartTime, 
         winnerName: state.winnerName,
         currentRemainingTime: finalCurrentRemaining 
      };
     const handlerEndTime = Date.now();
-    // console.log(`[API V4] Mengirim respons (${handlerEndTime - handlerStartTime}ms):`, JSON.stringify(responseState));
+    // console.log(`[API V5] Mengirim respons (${handlerEndTime - handlerStartTime}ms):`, JSON.stringify(responseState));
     return res.status(200).json(responseState);
 
   } catch (error) {
-    console.error("[API V4] Error Handler:", error);
+    console.error("[API V5] Error Handler:", error);
      try {
          const defaultState = getDefaultState();
-         console.log("[API V4] Mengirim fallback state karena error.");
+         console.log("[API V5] Mengirim fallback state karena error.");
          return res.status(500).json({ ...defaultState, currentRemainingTime: defaultState.remainingTime, error: 'Internal Server Error (fallback)', details: error.message });
      } catch (fallbackError) {
-         console.error("[API V4] Error saat mengirim fallback state:", fallbackError);
+         console.error("[API V5] Error saat mengirim fallback state:", fallbackError);
          return res.status(500).send('Internal Server Error');
      }
   }
