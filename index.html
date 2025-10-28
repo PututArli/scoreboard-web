@@ -3,51 +3,254 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>Scoreboard Tatami (Minimal Test)</title>
+    <title>Scoreboard Tatami</title>
     <link href="https://fonts.googleapis.com/css2?family=Roboto:wght@400;700;900&family=Orbitron:wght@700&display=swap" rel="stylesheet">
     
     <style>
-        /* CSS TETAP SAMA SEPERTI SEBELUMNYA */
         :root {
-            --color-red: #E53935; /* ... */
-            font-family: 'Roboto', sans-serif; /* ... */
+            --color-red: #E53935;
+            --color-red-dark: #C62828;
+            --color-blue: #1E88E5;
+            --color-blue-dark: #1565C0;
+            --color-dark: #212121;
+            --color-light: #FAFAFA;
+            --color-accent: #00BCD4;
+            
+            font-family: 'Roboto', sans-serif;
+            font-synthesis: none;
+            text-rendering: optimizeLegibility;
+            -webkit-font-smoothing: antialiased;
+            -moz-osx-font-smoothing: grayscale;
+            -webkit-text-size-adjust: 100%;
         }
-        *, *::before, *::after { box-sizing: border-box; margin: 0; padding: 0; }
-        body { background: linear-gradient(135deg, #f5f7fa 0%, #c3cfe2 100%); /* ... */ }
-        .container { width: 100%; max-width: 1200px; /* ... */ }
-        .header { background-color: var(--color-accent); /* ... */ }
-        .scoreboard { display: flex; /* ... */ }
-        .player { flex: 1; background: #FFFFFF; /* ... */ }
-        .player-name-input { font-size: clamp(1rem, 2.5vw, 1.2rem); /* ... */ }
-        .player-name-input:disabled { background-color: #eee; /* ... */ }
-        .score-box { width: 100%; padding-top: 100%; /* ... */ }
+
+        *, *::before, *::after {
+            box-sizing: border-box;
+            margin: 0;
+            padding: 0;
+        }
+
+        body {
+            background: linear-gradient(135deg, #f5f7fa 0%, #c3cfe2 100%);
+            color: var(--color-dark);
+            display: flex;
+            flex-direction: column;
+            justify-content: center;
+            align-items: center;
+            min-height: 100vh;
+            padding: 1rem;
+            overflow-x: hidden; 
+        }
+
+        .container {
+            width: 100%;
+            max-width: 1200px;
+            text-align: center;
+            padding: 1rem;
+        }
+
+        .header {
+            background-color: var(--color-accent);
+            color: white;
+            padding: 0.75rem 2rem;
+            border-radius: 50px;
+            font-size: 1.25rem;
+            font-weight: 700;
+            display: inline-block;
+            margin-bottom: 2rem;
+            box-shadow: 0 4px 15px rgba(0, 188, 212, 0.4);
+        }
+
+        .scoreboard {
+            display: flex;
+            justify-content: space-around;
+            align-items: stretch;
+            width: 100%;
+            gap: clamp(1rem, 3vw, 1.5rem); 
+        }
+
+        .player {
+            flex: 1;
+            background: #FFFFFF;
+            border-radius: 20px;
+            padding: clamp(1rem, 3vw, 1.5rem); 
+            box-shadow: 0 10px 30px rgba(0, 0, 0, 0.08);
+            display: flex;
+            flex-direction: column;
+            max-width: 500px; 
+            margin: 0 auto;
+        }
+
+        .player-name-input {
+            font-size: clamp(1rem, 2.5vw, 1.2rem); 
+            font-weight: 700;
+            border: 2px solid #ddd;
+            border-radius: 8px;
+            padding: 0.5rem;
+            text-align: center;
+            width: 100%;
+            margin-bottom: 1rem;
+            transition: all 0.2s;
+        }
+        .player-name-input:focus {
+            border-color: var(--color-accent);
+            outline: none;
+            box-shadow: 0 0 10px rgba(0, 188, 212, 0.3);
+        }
+        #nama-kiri-input { color: var(--color-red-dark); border-color: var(--color-red); }
+        #nama-kanan-input { color: var(--color-blue-dark); border-color: var(--color-blue); }
+
+        .player-name-input:disabled {
+            background-color: #eee;
+            opacity: 0.7;
+            cursor: not-allowed;
+        }
+
+        .score-box {
+            width: 100%;
+            padding-top: 100%;
+            position: relative;
+            border-radius: 20px;
+            box-shadow: inset 0 4px 10px rgba(0, 0, 0, 0.1);
+            transition: transform 0.2s ease-out;
+        }
+        
         #score-kiri { background-color: var(--color-red); }
         #score-kanan { background-color: var(--color-blue); }
-        .score-number { font-family: 'Orbitron', sans-serif; font-size: clamp(4rem, 15vw, 8rem); /* ... */ }
-        .score-pop { animation: pop 0.2s ease-out; }
-        @keyframes pop { 0%, 100% { transform: scale(1); } 50% { transform: scale(1.05); } }
-        .vs { font-size: clamp(2.5rem, 5vw, 4rem); /* ... */ }
-        .timer-container { margin-top: 2rem; /* ... */ }
-        .timer { background-color: var(--color-dark); font-family: 'Orbitron', sans-serif; /* ... */ }
-        .timer small { font-size: clamp(1rem, 3vw, 2rem); }
-        .controls { margin-top: 1.5rem; display: flex; /* ... */ }
-        .control-button { font-size: 0.9rem; /* ... */ }
-        #btn-start { background-color: #4CAF50; /* ... */ }
-        #btn-stop { background-color: #f44336; /* ... */ }
-        #btn-reset { background-color: #FFC107; /* ... */ }
-        .control-button:hover { opacity: 0.8; /* ... */ }
-        .control-button:active { transform: translateY(1px); }
-        #winner-overlay { position: fixed; /* ... */ display: none; }
-        #winner-box { background-color: white; /* ... */ }
-        #winner-box h1 { font-size: clamp(2rem, 6vw, 3rem); /* ... */ }
-        #winner-name { font-size: clamp(1.5rem, 4vw, 2rem); /* ... */ }
-        @keyframes fadeIn { from { opacity: 0; transform: scale(0.8); } to { opacity: 1; transform: scale(1); } }
+
+        .score-number {
+            position: absolute;
+            top: 0;
+            left: 0;
+            right: 0;
+            bottom: 0;
+            display: flex;
+            justify-content: center;
+            align-items: center;
+            
+            font-family: 'Orbitron', sans-serif; 
+            font-size: clamp(4rem, 15vw, 8rem); 
+            font-weight: 700;
+            color: white;
+            text-shadow: 0 4px 10px rgba(0, 0, 0, 0.2);
+        }
+        
+        .score-pop {
+            animation: pop 0.2s ease-out;
+        }
+        @keyframes pop {
+            0%, 100% { transform: scale(1); }
+            50% { transform: scale(1.05); }
+        }
+
+        .vs {
+            font-size: clamp(2.5rem, 5vw, 4rem); 
+            font-weight: 900;
+            color: #BDBDBD;
+            align-self: center;
+            flex: 0.5;
+            padding: 0 0.5rem; 
+        }
+
+        .timer-container {
+            margin-top: 2rem;
+            width: 100%;
+        }
+
+        .timer {
+            background-color: var(--color-dark);
+            color: white;
+            font-family: 'Orbitron', sans-serif;
+            font-size: clamp(2rem, 6vw, 4rem); 
+            font-weight: 700;
+            padding: 1rem 1.5rem; 
+            border-radius: 15px;
+            display: inline-block;
+            box-shadow: 0 4px 20px rgba(0, 0, 0, 0.2);
+            width: 100%;
+            max-width: 400px; 
+        }
+        .timer small {
+            font-size: clamp(1rem, 3vw, 2rem); 
+        }
+
+        .controls {
+            margin-top: 1.5rem;
+            display: flex;
+            justify-content: center;
+            gap: 0.75rem; 
+            flex-wrap: wrap;
+        }
+        
+        .control-button {
+            font-size: 0.9rem; 
+            font-weight: 700;
+            padding: 0.6rem 1.2rem; 
+            border: none;
+            border-radius: 8px;
+            cursor: pointer;
+            transition: all 0.2s ease;
+            box-shadow: 0 2px 5px rgba(0,0,0,0.1);
+        }
+        #btn-start { background-color: #4CAF50; color: white; }
+        #btn-stop { background-color: #f44336; color: white; } 
+        #btn-reset { background-color: #FFC107; color: var(--color-dark); }
+        
+        .control-button:hover {
+            opacity: 0.8;
+            transform: translateY(-2px);
+        }
+        .control-button:active {
+            transform: translateY(1px);
+        }
+       
+        #winner-overlay {
+            position: fixed;
+            top: 0;
+            left: 0;
+            width: 100%;
+            height: 100%;
+            background-color: rgba(0, 0, 0, 0.8);
+            display: none; 
+            justify-content: center;
+            align-items: center;
+            z-index: 1000;
+            backdrop-filter: blur(5px);
+        }
+
+        #winner-box {
+            background-color: white;
+            padding: 2.5rem 3rem; 
+            border-radius: 15px;
+            text-align: center;
+            box-shadow: 0 10px 30px rgba(0,0,0,0.3);
+            animation: fadeIn 0.5s ease;
+            transform: scale(0.9);
+            max-width: 90%; 
+        }
+        
+        #winner-box h1 {
+            font-size: clamp(2rem, 6vw, 3rem); 
+            margin-top: 0;
+            color: var(--color-accent);
+        }
+        #winner-name {
+            font-size: clamp(1.5rem, 4vw, 2rem); 
+            font-weight: 700;
+            margin-bottom: 1.5rem;
+        }
+
+        @keyframes fadeIn {
+            from { opacity: 0; transform: scale(0.8); }
+            to { opacity: 1; transform: scale(1); }
+        }
+
     </style>
 </head>
 <body>
 
     <div class="container">
-        <div class="header">TATAMI SCOREBOARD (Minimal Test)</div>
+        <div class="header">TATAMI SCOREBOARD</div>
 
         <div class="scoreboard">
             <div class="player">
@@ -72,15 +275,12 @@
         </div>
         
         <div class="controls">
-            <!-- Tombol Start/Pause web mengirim perintah yg sama dgn remote -->
             <button id="btn-start" class="control-button">START</button>
             <button id="btn-stop" class="control-button">PAUSE</button> 
             <button id="btn-reset" class="control-button">RESET ALL</button>
-            <!-- Tombol skor kiri +1 untuk tes -->
-            <button class="control-button" onclick="kirimRequest('/api?score_kiri=1')">Test +1 Kiri</button> 
         </div>
         
-        <!-- Tombol manual lain dihapus -->
+        <!-- Tombol manual sudah dihapus -->
 
     </div>
 
@@ -117,27 +317,25 @@
         let pollIntervalId = null; 
         const INITIAL_TIME_MS_FRONTEND = 180 * 1000;
 
-        // Fungsi kirim request (path relatif)
         async function kirimRequest(path) {
+            // Gunakan path relatif
             try {
                 // console.log('Mengirim:', path); 
                 await fetch(path); 
-                // Tidak perlu poll paksa
             } catch (error) {
                 console.error('Gagal kirim request:', error);
                  elTimer.innerHTML = "ERR: Send";
             }
         }
         
-        // Fungsi update tampilan
         function updateDisplay(newState) {
              if (!newState || typeof newState.skorKiri === 'undefined' || typeof newState.remainingTime !== 'number') {
                  console.error("updateDisplay: Menerima state tidak valid:", newState);
                  elTimer.innerHTML = "ERR: State"; return;
              }
              
-             // --- Update Skor & Animasi ---
-             if (currentServerState.skorKiri !== newState.skorKiri) {
+             // Update Skor & Animasi
+            if (currentServerState.skorKiri !== newState.skorKiri) {
                 elBoxKiri.classList.add('score-pop');
                 setTimeout(() => elBoxKiri.classList.remove('score-pop'), 200);
              }
@@ -148,7 +346,7 @@
              elSkorKiri.textContent = newState.skorKiri || 0; 
              elSkorKanan.textContent = newState.skorKanan || 0; 
             
-            // --- Update Nama & disable status ---
+            // Update Nama & disable status
             if (document.activeElement !== elNamaKiri) { elNamaKiri.value = newState.namaKiri || "PEMAIN 1"; }
             if (document.activeElement !== elNamaKanan) { elNamaKanan.value = newState.namaKanan || "PEMAIN 2"; }
             const disableInputs = newState.timerRunning || newState.winnerName;
@@ -207,7 +405,7 @@
         }
 
         function startClientTimer(serverLastStartTime, serverCurrentRemainingTime) {
-            stopClientTimer(); 
+            stopClientTimer(); // Selalu stop dulu
 
             const initialRemaining = (typeof serverCurrentRemainingTime === 'number' && !isNaN(serverCurrentRemainingTime)) ? serverCurrentRemainingTime : 0;
             const validLastStartTime = (typeof serverLastStartTime === 'number' && serverLastStartTime > 0) ? serverLastStartTime : Date.now();
@@ -279,6 +477,7 @@
                      return;
                  }
 
+                // Update hanya jika state BERBEDA
                 if (JSON.stringify(newState) !== JSON.stringify(currentServerState)) {
                     updateDisplay(newState);
                 } else {
@@ -323,7 +522,8 @@
              if (isSending) return; 
              isSending = true;
              await kirimRequest(path);
-             setTimeout(pollServer, 100); // Poll sedikit lebih cepat setelah kirim
+             // Panggil poll setelah jeda untuk update UI
+             setTimeout(pollServer, 100); 
              setTimeout(() => { isSending = false; }, 300); 
         };
 
@@ -390,3 +590,4 @@
     </script>
 </body>
 </html>
+
