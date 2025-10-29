@@ -455,7 +455,7 @@
                  lastDisplayedTime = currentRemaining; // Update waktu terakhir
 
                  if (currentRemaining <= 0) {
-                      // console.log("Client timer setInterval reached zero.");
+                      console.log("Client timer setInterval reached zero.");
                       stopClientTimer(); // Hentikan interval
                       // Panggil pollServer sekali lagi untuk memastikan state akhir dari server
                       setTimeout(pollServer, 100); 
