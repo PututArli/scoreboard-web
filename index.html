@@ -319,30 +319,34 @@
             isSending = true;
             try {
                 // console.log('Mengirim:', path); 
-                await fetch(path); 
+                await fetch(path); // Gunakan path relatif
                 // Panggil poll lebih cepat setelah kirim
                 setTimeout(pollServer, 100); 
             } catch (error) {
                 console.error('Gagal kirim request:', error);
                  elTimer.innerHTML = "ERR: Send";
             } finally {
-                 setTimeout(() => { isSending = false; }, 300); 
+                 // Reset flag setelah jeda agar tidak spam
+                 setTimeout(() => { isSending = false; }, 250); // Jeda 250ms
             }
         }
         
         // --- Fungsi Update Tampilan Utama ---
         function updateDisplay(newState) {
+             // Validasi newState sebelum digunakan
              if (!newState || typeof newState.skorKiri === 'undefined' || typeof newState.remainingTime !== 'number') {
                  console.error("updateDisplay: Invalid state:", newState);
                  elTimer.innerHTML = "ERR: State"; return;
              }
              
-             // Update Skor & Animasi
+             // Update Skor & Animasi (hanya jika berubah)
              if (currentServerState.skorKiri !== newState.skorKiri) {
-                elBoxKiri.classList.add('score-pop'); setTimeout(() => elBoxKiri.classList.remove('score-pop'), 200);
+                elBoxKiri.classList.add('score-pop'); 
+                setTimeout(() => elBoxKiri.classList.remove('score-pop'), 200);
              }
              if (currentServerState.skorKanan !== newState.skorKanan) {
-                elBoxKanan.classList.add('score-pop'); setTimeout(() => elBoxKanan.classList.remove('score-pop'), 200);
+                elBoxKanan.classList.add('score-pop'); 
+                setTimeout(() => elBoxKanan.classList.remove('score-pop'), 200);
              }
              elSkorKiri.textContent = newState.skorKiri || 0; 
              elSkorKanan.textContent = newState.skorKanan || 0; 
@@ -355,14 +359,17 @@
             elNamaKanan.disabled = disableInputs;
 
             // --- Logika Tampilan Timer & Tombol ---
+            // Gunakan currentRemainingTime dari server jika ada, fallback ke remainingTime, terakhir 0
             const displayTime = newState.currentRemainingTime ?? newState.remainingTime ?? 0;
-            const validDisplayTime = (typeof displayTime === 'number' && !isNaN(displayTime)) ? Math.max(0, displayTime) : 0;
+            // Pastikan displayTime adalah angka valid >= 0
+            const validDisplayTime = (typeof displayTime === 'number' && !isNaN(displayTime)) ? Math.max(0, displayTime) : 0; 
              
             if (newState.timerRunning) {
                 // Timer berjalan di server
                 // Validasi data SEBELUM memulai timer client
+                // Gunakan remainingTime (waktu tersimpan saat start/resume) untuk kalkulasi endTime
                 if (newState.lastStartTime && typeof newState.lastStartTime === 'number' && newState.lastStartTime > 0 && typeof newState.remainingTime === 'number') {
-                     startClientTimer(newState.lastStartTime, newState.remainingTime); // Kirim WAKTU SISA SAAT START/RESUME
+                     startClientTimer(newState.lastStartTime, newState.remainingTime); 
                 } else {
                      console.warn("Data tidak valid untuk startClientTimer:", newState);
                      stopClientTimer(); // Hentikan jika data tidak valid
@@ -386,18 +393,20 @@
             }
             
             // --- Logika Pemenang ---
+            // Hanya tampilkan jika ada nama pemenang DAN notifikasi belum tampil
             if (newState.winnerName && !isWinnerShown) { 
-                console.log("Pemenang terdeteksi oleh updateDisplay:", newState.winnerName);
+                console.log("Menampilkan notif pemenang:", newState.winnerName);
                 winnerName.textContent = newState.winnerName.toUpperCase();
                 winnerOverlay.style.display = 'flex';
-                isWinnerShown = true; 
-                stopPolling(); 
-                btnStart.style.display = 'none'; 
+                isWinnerShown = true; // Set flag SEGERA
+                stopPolling(); // Hentikan polling
+                btnStart.style.display = 'none'; // Sembunyikan tombol timer
                 btnStop.style.display = 'none';
-                stopClientTimer(); 
+                stopClientTimer(); // Hentikan timer client
             } 
+            // Jangan reset isWinnerShown di sini, biarkan tombol close yg handle
 
-            // Simpan state terakhir
+            // Simpan state terakhir agar perbandingan di iterasi berikutnya benar
             currentServerState = newState;
         }
         
@@ -406,24 +415,28 @@
 
         function startClientTimer(serverLastStartTime, serverRemainingTimeOnStart) {
              // Hitung waktu akhir target berdasarkan data server TERBARU
+             // Validasi input dulu
              const initialRemaining = (typeof serverRemainingTimeOnStart === 'number' && !isNaN(serverRemainingTimeOnStart)) ? serverRemainingTimeOnStart : 0;
-             // Jika lastStartTime 0 (misalnya state rusak), anggap start dari sekarang
              const validLastStartTime = (typeof serverLastStartTime === 'number' && serverLastStartTime > 0) ? serverLastStartTime : Date.now(); 
-             const newEndTime = validLastStartTime + initialRemaining; 
+             const newEndTime = validLastStartTime + initialRemaining; // Kapan seharusnya berakhir
 
              // HANYA MULAI/RESTART jika interval belum ada ATAU target waktunya berubah
-             if (clientTimerInterval !== null && clientTimer_endTime === newEndTime) {
-                  return; // Sudah berjalan dengan target yg sama
+             // Tambah toleransi sedikit (misal 100ms) agar tidak restart terus karena perbedaan kecil
+             if (clientTimerInterval !== null && Math.abs(clientTimer_endTime - newEndTime) < 100) {
+                  return; // Sudah berjalan dengan target yg cukup dekat
              }
              
              stopClientTimer(); // Hentikan interval lama jika ada
 
              clientTimer_endTime = newEndTime; // Simpan waktu akhir target
              
-             console.log("Starting/Restarting client timer setInterval. Initial:", initialRemaining, "Target End Time:", new Date(clientTimer_endTime));
+             // console.log("Starting/Restarting client timer setInterval. Initial:", initialRemaining, "Target End Time:", new Date(clientTimer_endTime));
              
              // Fungsi yang dijalankan interval
              const timerTick = () => {
+                 // Cek apakah timer masih relevan (jika stopClientTimer dipanggil di luar interval)
+                 if (clientTimerInterval === null) return; 
+                 
                  const now = Date.now();
                  // Hitung sisa waktu berdasarkan waktu SEKARANG dan waktu AKHIR target
                  const currentRemaining = Math.max(0, clientTimer_endTime - now); 
@@ -438,9 +451,9 @@
                  }
              };
              
-             // Panggil sekali segera
+             // Panggil sekali segera agar tampilan update cepat
              timerTick(); 
-             // Jalankan interval (100ms untuk akurasi detik yg baik, tapi milidetik mungkin kurang halus)
+             // Jalankan interval (100ms untuk akurasi detik yg baik)
              clientTimerInterval = setInterval(timerTick, 100); 
         }
         
@@ -449,7 +462,7 @@
                 // console.log("Stopping client timer setInterval");
                 clearInterval(clientTimerInterval); 
                 clientTimerInterval = null;
-                clientTimer_endTime = 0; 
+                clientTimer_endTime = 0; // Reset end time ref
             }
         }
         
@@ -480,6 +493,7 @@
 
         // Fungsi Polling
         async function pollServer() {
+            // Jangan poll jika notifikasi tampil ATAU jika sedang mengirim request
             if (isWinnerShown || isSending) return; 
 
             try {
@@ -492,7 +506,7 @@
                 const newState = await response.json();
                 
                  // Validasi data penting dari server
-                 if (newState === null || typeof newState !== 'object' || typeof newState.remainingTime !== 'number') { // Hanya cek remainingTime
+                 if (newState === null || typeof newState !== 'object' || typeof newState.remainingTime !== 'number') { 
                      console.error("Invalid state data from server:", newState);
                      elTimer.innerHTML = "ERR:Data"; 
                      currentServerState = {}; // Reset state lokal
@@ -500,9 +514,8 @@
                  }
                  // Tambahan validasi currentRemainingTime jika ada
                  if (typeof newState.currentRemainingTime !== 'undefined' && typeof newState.currentRemainingTime !== 'number') {
-                     console.error("Invalid currentRemainingTime from server:", newState.currentRemainingTime);
-                     // Mungkin fallback ke remainingTime? Atau tampilkan error?
-                     newState.currentRemainingTime = newState.remainingTime; // Coba fallback
+                     // Jika tidak ada/invalid, coba gunakan remainingTime saja
+                     newState.currentRemainingTime = newState.remainingTime;
                  }
 
 
@@ -522,7 +535,7 @@
         function startPolling() {
              if (pollIntervalId) clearInterval(pollIntervalId); 
              pollIntervalId = setInterval(pollServer, 200);
-             setTimeout(pollServer, 50); 
+             setTimeout(pollServer, 50); // Panggil poll pertama setelah jeda
              console.log("Polling started.");
         }
         function stopPolling() {
@@ -557,16 +570,19 @@
                 elNamaKanan.disabled = false;
                 btnStart.style.display = 'inline-block'; 
                 btnStop.style.display = 'none'; 
-                currentServerState = {}; 
+                currentServerState = {}; // Reset state lokal krusial!
                 setTimeout(startPolling, 50); 
             }
         };
         
         btnCloseWinner.onclick = () => {
-             winnerOverlay.style.display = 'none';
-             isWinnerShown = false; 
+             winnerOverlay.style.display = 'none'; // Langsung sembunyikan
+             isWinnerShown = false; // Reset flag SEGERA
              console.log("Notifikasi ditutup, isWinnerShown = false");
+             
+             // Kirim request reset setelah UI di-handle
              handleRequest('/api?reset_skor=1'); 
+             
              // Reset UI Langsung
              stopClientTimer();
              elTimer.innerHTML = formatTime(INITIAL_TIME_MS_FRONTEND);
@@ -576,7 +592,9 @@
              elNamaKanan.disabled = false;
              btnStart.style.display = 'inline-block';
              btnStop.style.display = 'none';
-             currentServerState = {}; 
+             currentServerState = {}; // Reset state lokal penting!
+             
+             // Mulai polling lagi SEGERA
              startPolling(); 
         };
         
@@ -597,7 +615,7 @@
         // --- Inisialisasi ---
         elTimer.innerHTML = formatTime(INITIAL_TIME_MS_FRONTEND);
         btnStop.style.display = 'none'; 
-        startPolling(); 
+        startPolling(); // Mulai polling saat halaman dimuat
 
     </script>
 </body>
