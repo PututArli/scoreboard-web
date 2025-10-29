@@ -278,8 +278,7 @@
             <button id="btn-reset" class="control-button">RESET ALL</button>
         </div>
         
-        <!-- Tombol manual sudah dihapus -->
-    </div>
+        </div>
 
     <div id="winner-overlay">
         <div id="winner-box">
@@ -395,7 +394,7 @@
             // --- Logika Pemenang ---
             // Hanya tampilkan jika ada nama pemenang DAN notifikasi belum tampil
             if (newState.winnerName && !isWinnerShown) { 
-                console.log("Menampilkan notif pemenang:", newState.winnerName);
+                console.log("Pemenang terdeteksi oleh updateDisplay:", newState.winnerName);
                 winnerName.textContent = newState.winnerName.toUpperCase();
                 winnerOverlay.style.display = 'flex';
                 isWinnerShown = true; // Set flag SEGERA
@@ -417,6 +416,7 @@
              // Hitung waktu akhir target berdasarkan data server TERBARU
              // Validasi input dulu
              const initialRemaining = (typeof serverRemainingTimeOnStart === 'number' && !isNaN(serverRemainingTimeOnStart)) ? serverRemainingTimeOnStart : 0;
+             // Jika lastStartTime 0 (misalnya state rusak), anggap start dari sekarang
              const validLastStartTime = (typeof serverLastStartTime === 'number' && serverLastStartTime > 0) ? serverLastStartTime : Date.now(); 
              const newEndTime = validLastStartTime + initialRemaining; // Kapan seharusnya berakhir
 
@@ -444,7 +444,7 @@
                  elTimer.innerHTML = formatTime(currentRemaining);
 
                  if (currentRemaining <= 0) {
-                      console.log("Client timer setInterval reached zero.");
+                      // console.log("Client timer setInterval reached zero.");
                       stopClientTimer(); // Hentikan interval
                       // Panggil pollServer sekali lagi untuk memastikan state akhir dari server
                       setTimeout(pollServer, 100); 
@@ -620,4 +620,3 @@
     </script>
 </body>
 </html>
-
