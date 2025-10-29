@@ -72,8 +72,7 @@
             <button id="btn-reset" class="control-button">RESET ALL</button>
         </div>
         
-        <!-- Tombol manual sudah dihapus -->
-    </div>
+        </div>
 
     <div id="winner-overlay">
         <div id="winner-box">
@@ -114,7 +113,6 @@
             try {
                 // console.log('Mengirim:', path); 
                 await fetch(path); 
-                // Panggil poll lebih cepat setelah kirim
                 setTimeout(pollServer, 100); 
             } catch (error) {
                 console.error('Gagal kirim request:', error);
@@ -149,18 +147,19 @@
             elNamaKanan.disabled = disableInputs;
 
             // --- Logika Tampilan Timer & Tombol ---
+            // Gunakan currentRemainingTime dari server, fallback ke remainingTime, terakhir 0
             const displayTime = newState.currentRemainingTime ?? newState.remainingTime ?? 0;
             const validDisplayTime = (typeof displayTime === 'number' && !isNaN(displayTime)) ? Math.max(0, displayTime) : 0;
              
             if (newState.timerRunning) {
                 // Timer berjalan di server
-                // Validasi data SEBELUM memulai timer client
-                if (newState.lastStartTime && typeof newState.lastStartTime === 'number' && newState.lastStartTime > 0 && typeof newState.remainingTime === 'number') {
-                     startClientTimer(newState.lastStartTime, newState.remainingTime); // Kirim WAKTU SISA SAAT START/RESUME
+                // Validasi data endTime SEBELUM memulai timer client
+                if (newState.endTime && typeof newState.endTime === 'number' && newState.endTime > 0) {
+                     startClientTimer(newState.endTime); // Mulai timer client dengan target endTime
                 } else {
-                     console.warn("Data tidak valid untuk startClientTimer:", newState);
-                     stopClientTimer(); // Hentikan jika data tidak valid
-                     elTimer.innerHTML = formatTime(validDisplayTime); // Tampilkan waktu statis
+                     console.warn("Data endTime tidak valid saat timerRunning:", newState);
+                     stopClientTimer(); 
+                     elTimer.innerHTML = formatTime(validDisplayTime); 
                 }
                 btnStart.style.display = 'none';
                 btnStop.style.display = 'inline-block'; // Tampilkan PAUSE
@@ -181,7 +180,7 @@
             
             // --- Logika Pemenang ---
             if (newState.winnerName && !isWinnerShown) { 
-                console.log("Menampilkan notif pemenang:", newState.winnerName);
+                console.log("Pemenang terdeteksi:", newState.winnerName);
                 winnerName.textContent = newState.winnerName.toUpperCase();
                 winnerOverlay.style.display = 'flex';
                 isWinnerShown = true; 
@@ -195,32 +194,32 @@
             currentServerState = newState;
         }
         
-        // --- Fungsi Timer Client (Mundur) - setInterval AKURAT ---
-        let clientTimer_endTime = 0; // Kapan timer client seharusnya berakhir
+        // --- Fungsi Timer Client (Mundur) - Berbasis endTime DARI SERVER ---
+        let clientTimer_targetEndTime = 0; // Kapan timer client seharusnya berakhir
 
-        function startClientTimer(serverLastStartTime, serverRemainingTimeOnStart) {
-             // Hitung waktu akhir target berdasarkan data server TERBARU
-             const initialRemaining = (typeof serverRemainingTimeOnStart === 'number' && !isNaN(serverRemainingTimeOnStart)) ? serverRemainingTimeOnStart : 0;
-             const validLastStartTime = (typeof serverLastStartTime === 'number' && serverLastStartTime > 0) ? serverLastStartTime : Date.now(); // Fallback jika start time 0
-             const newEndTime = validLastStartTime + initialRemaining; // Kapan seharusnya berakhir
-
-             // HANYA MULAI/RESTART jika interval belum ada ATAU target waktunya berubah
-             if (clientTimerInterval !== null && clientTimer_endTime === newEndTime) {
-                  // console.log("Client timer already running correctly.");
-                  return; // Sudah berjalan, tidak perlu restart
+        function startClientTimer(serverEndTime) {
+             // Hanya mulai/restart jika end time berbeda dari sebelumnya ATAU timer belum jalan
+             if (clientTimerInterval !== null && clientTimer_targetEndTime === serverEndTime) {
+                  return; // Sudah berjalan dengan target yg sama
              }
-             
+
              stopClientTimer(); // Hentikan interval lama jika ada
 
-             clientTimer_endTime = newEndTime; // Simpan waktu akhir target
+             // Validasi serverEndTime
+             if (typeof serverEndTime !== 'number' || serverEndTime <= 0) {
+                  console.error("startClientTimer dipanggil dengan endTime tidak valid:", serverEndTime);
+                  return;
+             }
              
-             console.log("Starting/Restarting client timer setInterval. Initial:", initialRemaining, "Target End Time:", new Date(clientTimer_endTime));
+             clientTimer_targetEndTime = serverEndTime; // Simpan waktu akhir target
+             
+             console.log("Starting/Restarting client timer setInterval. Target End Time:", new Date(clientTimer_targetEndTime));
              
              // Fungsi yang dijalankan interval
              const timerTick = () => {
                  const now = Date.now();
                  // Hitung sisa waktu berdasarkan waktu SEKARANG dan waktu AKHIR target
-                 const currentRemaining = Math.max(0, clientTimer_endTime - now); 
+                 const currentRemaining = Math.max(0, clientTimer_targetEndTime - now); 
                  
                  elTimer.innerHTML = formatTime(currentRemaining);
 
@@ -232,18 +231,18 @@
                  }
              };
              
-             // Panggil sekali segera agar tampilan update cepat
+             // Panggil sekali segera
              timerTick(); 
-             // Jalankan interval (misal setiap 100ms untuk akurasi detik)
-             clientTimerInterval = setInterval(timerTick, 100); // Interval 100ms
+             // Jalankan interval (100ms untuk akurasi detik yg baik)
+             clientTimerInterval = setInterval(timerTick, 100); 
         }
         
         function stopClientTimer() {
             if (clientTimerInterval) {
                 // console.log("Stopping client timer setInterval");
-                clearInterval(clientTimerInterval); // Hentikan interval
+                clearInterval(clientTimerInterval); 
                 clientTimerInterval = null;
-                clientTimer_endTime = 0; // Reset end time ref
+                clientTimer_targetEndTime = 0; 
             }
         }
         
@@ -253,7 +252,6 @@
             const totalDetik = Math.floor(ms / 1000);
             const menit = Math.floor(totalDetik / 60);
             const detik = totalDetik % 60;
-            // Tampilkan 2 digit milidetik
             const milidetik = ms > 0 ? Math.floor((ms % 1000) / 10) : 0; 
             const pad = (num, length = 2) => String(num).padStart(length, '0');
             if (isNaN(menit) || isNaN(detik) || isNaN(milidetik)) {
@@ -282,10 +280,10 @@
                 }
                 const newState = await response.json();
                 
-                 if (newState === null || typeof newState !== 'object' || typeof newState.remainingTime !== 'number' || typeof newState.currentRemainingTime !== 'number') {
+                 if (newState === null || typeof newState !== 'object' || typeof newState.remainingTime !== 'number') { // Hanya cek remainingTime
                      console.error("Invalid state data from server:", newState);
                      elTimer.innerHTML = "ERR:Data"; 
-                     currentServerState = {}; // Reset state lokal
+                     currentServerState = {}; 
                      return;
                  }
 
@@ -293,7 +291,7 @@
                 if (JSON.stringify(newState) !== JSON.stringify(currentServerState)) {
                     updateDisplay(newState);
                 } 
-                // Tidak perlu sinkronisasi tambahan di sini, updateDisplay sudah handle
+                // Tidak perlu sinkronisasi tambahan, updateDisplay sudah handle
                 
             } catch (error) {
                 console.error('Gagal polling server:', error);
@@ -317,7 +315,6 @@
              if (isSending) return; 
              isSending = true;
              await kirimRequest(path);
-             // Panggil poll setelah jeda untuk update UI
              setTimeout(pollServer, 100); 
              setTimeout(() => { isSending = false; }, 300); 
         };
