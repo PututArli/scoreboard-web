@@ -1,0 +1,206 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Tatami Scoreboard</title>
+    <style>
+        @import url('https://fonts.googleapis.com/css2?family=Roboto+Mono:wght@700&family=Roboto:wght@700&display=swap');
+        body {
+            font-family: 'Roboto', sans-serif;
+            background-color: #f0f2f5;
+            display: flex;
+            flex-direction: column;
+            align-items: center;
+            justify-content: center;
+            height: 100vh;
+            margin: 0;
+            overflow: hidden;
+        }
+        .title {
+            background-color: #00bcd4;
+            color: white;
+            padding: 10px 30px;
+            border-radius: 20px;
+            font-size: 1.2rem;
+            margin-bottom: 20px;
+            box-shadow: 0 4px 10px rgba(0, 0, 0, 0.1);
+        }
+        .scoreboard-container {
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            gap: 50px;
+            width: 100%;
+        }
+        .player-card {
+            width: 350px;
+            height: 400px;
+            background-color: white;
+            border-radius: 15px;
+            box-shadow: 0 10px 20px rgba(0, 0, 0, 0.1);
+            overflow: hidden;
+            display: flex;
+            flex-direction: column;
+        }
+        .player-name {
+            font-size: 1.5rem;
+            text-align: center;
+            padding: 15px;
+            border-bottom: 2px solid #eee;
+        }
+        .player-name.red {
+            border: 5px solid #e74c3c;
+            color: #e74c3c;
+            border-radius: 10px 10px 0 0;
+        }
+        .player-name.blue {
+            border: 5px solid #3498db;
+            color: #3498db;
+            border-radius: 10px 10px 0 0;
+        }
+        .score-display {
+            flex-grow: 1;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            font-size: 15rem;
+            color: white;
+            font-family: 'Roboto Mono', monospace;
+            font-weight: 700;
+        }
+        .score-display.red {
+            background-color: #e74c3c;
+        }
+        .score-display.blue {
+            background-color: #3498db;
+        }
+        .vs {
+            font-size: 4rem;
+            color: #bdc3c7;
+            font-weight: 700;
+        }
+        .timer-container {
+            background-color: #2c3e50;
+            color: white;
+            padding: 20px 40px;
+            border-radius: 15px;
+            font-family: 'Roboto Mono', monospace;
+            font-size: 4rem;
+            margin-top: 30px;
+            box-shadow: 0 4px 10px rgba(0, 0, 0, 0.2);
+            width: 250px;
+            text-align: center;
+        }
+        .timer-ms {
+            font-size: 2rem;
+            opacity: 0.7;
+        }
+        .controls {
+            display: none;
+        }
+    </style>
+</head>
+<body>
+
+    <div class="title">TATAMI SCOREBOARD</div>
+
+    <div class="scoreboard-container">
+        <div class="player-card">
+            <div class="player-name red">PEMAIN 1</div>
+            <div class="score-display red" id="skor-kiri">0</div>
+        </div>
+        <div class="vs">VS</div>
+        <div class="player-card">
+            <div class="player-name blue">PEMAIN 2</div>
+            <div class="score-display blue" id="skor-kanan">0</div>
+        </div>
+    </div>
+
+    <div class="timer-container" id="timer-display">3:00<span class="timer-ms">00</span></div>
+
+    <div class="controls">
+    </div>
+
+    <script>
+        const API_URL = '/api'; 
+        const WAKTU_PERTANDINGAN_DETIK = 180;
+
+        const skorKiriEl = document.getElementById('skor-kiri');
+        const skorKananEl = document.getElementById('skor-kanan');
+        const timerEl = document.getElementById('timer-display');
+
+        let gameIsOver = false;
+
+        function formatWaktu(detik) {
+            const menit = Math.floor(detik / 60);
+            const dtk = detik % 60;
+            return `${menit}:${dtk < 10 ? '0' : ''}${dtk}`;
+        }
+
+        function updateTimerDisplay(sisaWaktu) {
+            timerEl.innerHTML = `${formatWaktu(Math.ceil(sisaWaktu))}<span class="timer-ms">00</span>`;
+            
+            let ms = 99;
+            const msInterval = setInterval(() => {
+                ms = (ms > 0) ? ms - 1 : 99;
+                timerEl.innerHTML = `${formatWaktu(Math.ceil(sisaWaktu))}<span class="timer-ms">${ms < 10 ? '0' : ''}${ms}</span>`;
+                
+                if (sisaWaktu <= 0) {
+                   clearInterval(msInterval);
+                   timerEl.innerHTML = `0:00<span class="timer-ms">00</span>`;
+                }
+            }, 10);
+        }
+
+        function checkWinConditions(skorKiri, skorKanan, sisaWaktu) {
+            if (gameIsOver) {
+                if (skorKiri === 0 && skorKanan === 0 && sisaWaktu === WAKTU_PERTANDINGAN_DETIK) {
+                    gameIsOver = false;
+                }
+                return;
+            }
+
+            const selisih = Math.abs(skorKiri - skorKanan);
+            
+            if (selisih >= 8) {
+                gameIsOver = true;
+                const pemenang = (skorKiri > skorKanan) ? "PEMAIN 1" : "PEMAIN 2";
+                setTimeout(() => alert(`${pemenang} MENANG! (Selisih 8 poin)`), 100);
+            } 
+            else if (sisaWaktu <= 0) {
+                gameIsOver = true;
+                if (skorKiri > skorKanan) {
+                    setTimeout(() => alert("Waktu Habis! PEMAIN 1 MENANG!"), 100);
+                } else if (skorKanan > skorKiri) {
+                    setTimeout(() => alert("Waktu Habis! PEMAIN 2 MENANG!"), 100);
+                } else {
+                    setTimeout(() => alert("Waktu Habis! Hasilnya SERI!"), 100);
+                }
+            }
+        }
+
+        async function fetchStatus() {
+            try {
+                const response = await fetch(API_URL);
+                if (!response.ok) return;
+                const data = await response.json();
+                
+                const skorKiri = data.skorKiri || 0;
+                const skorKanan = data.skorKanan || 0;
+                const sisaWaktu = data.sisaWaktu !== undefined ? data.sisaWaktu : WAKTU_PERTANDINGAN_DETIK;
+
+                skorKiriEl.textContent = skorKiri;
+                skorKananEl.textContent = skorKanan;
+                updateTimerDisplay(sisaWaktu);
+                checkWinConditions(skorKiri, skorKanan, sisaWaktu);
+                
+            } catch (error) {
+                console.error("Gagal mengambil status:", error);
+            }
+        }
+        setInterval(fetchStatus, 1000);
+        fetchStatus(); 
+    </script>
+</body>
+</html>
