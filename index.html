@@ -7,38 +7,244 @@
     <link href="https://fonts.googleapis.com/css2?family=Roboto:wght@400;700;900&family=Orbitron:wght@700&display=swap" rel="stylesheet">
     
     <style>
-        /* CSS TETAP SAMA */
-        :root { --color-red: #E53935; /* ... */ font-family: 'Roboto', sans-serif; /* ... */ }
-        *, *::before, *::after { box-sizing: border-box; margin: 0; padding: 0; }
-        body { background: linear-gradient(135deg, #f5f7fa 0%, #c3cfe2 100%); /* ... */ overflow-x: hidden; }
-        .container { width: 100%; max-width: 1200px; /* ... */ }
-        .header { background-color: var(--color-accent); /* ... */ }
-        .scoreboard { display: flex; /* ... */ }
-        .player { flex: 1; background: #FFFFFF; max-width: 500px; /* ... */ }
-        .player-name-input { font-size: clamp(1rem, 2.5vw, 1.2rem); /* ... */ }
-        .player-name-input:disabled { background-color: #eee; /* ... */ }
-        .score-box { width: 100%; padding-top: 100%; /* ... */ }
+        :root {
+            --color-red: #E53935;
+            --color-red-dark: #C62828;
+            --color-blue: #1E88E5;
+            --color-blue-dark: #1565C0;
+            --color-dark: #212121;
+            --color-light: #FAFAFA;
+            --color-accent: #00BCD4;
+            
+            font-family: 'Roboto', sans-serif;
+            font-synthesis: none;
+            text-rendering: optimizeLegibility;
+            -webkit-font-smoothing: antialiased;
+            -moz-osx-font-smoothing: grayscale;
+            -webkit-text-size-adjust: 100%;
+        }
+
+        *, *::before, *::after {
+            box-sizing: border-box;
+            margin: 0;
+            padding: 0;
+        }
+
+        body {
+            background: linear-gradient(135deg, #f5f7fa 0%, #c3cfe2 100%);
+            color: var(--color-dark);
+            display: flex;
+            flex-direction: column;
+            justify-content: center;
+            align-items: center;
+            min-height: 100vh;
+            padding: 1rem;
+            overflow-x: hidden; 
+        }
+
+        .container {
+            width: 100%;
+            max-width: 1200px;
+            text-align: center;
+            padding: 1rem;
+        }
+
+        .header {
+            background-color: var(--color-accent);
+            color: white;
+            padding: 0.75rem 2rem;
+            border-radius: 50px;
+            font-size: 1.25rem;
+            font-weight: 700;
+            display: inline-block;
+            margin-bottom: 2rem;
+            box-shadow: 0 4px 15px rgba(0, 188, 212, 0.4);
+        }
+
+        .scoreboard {
+            display: flex;
+            justify-content: space-around;
+            align-items: stretch;
+            width: 100%;
+            gap: clamp(1rem, 3vw, 1.5rem); 
+        }
+
+        .player {
+            flex: 1;
+            background: #FFFFFF;
+            border-radius: 20px;
+            padding: clamp(1rem, 3vw, 1.5rem); 
+            box-shadow: 0 10px 30px rgba(0, 0, 0, 0.08);
+            display: flex;
+            flex-direction: column;
+            max-width: 500px; 
+            margin: 0 auto;
+        }
+
+        .player-name-input {
+            font-size: clamp(1rem, 2.5vw, 1.2rem); 
+            font-weight: 700;
+            border: 2px solid #ddd;
+            border-radius: 8px;
+            padding: 0.5rem;
+            text-align: center;
+            width: 100%;
+            margin-bottom: 1rem;
+            transition: all 0.2s;
+        }
+        .player-name-input:focus {
+            border-color: var(--color-accent);
+            outline: none;
+            box-shadow: 0 0 10px rgba(0, 188, 212, 0.3);
+        }
+        #nama-kiri-input { color: var(--color-red-dark); border-color: var(--color-red); }
+        #nama-kanan-input { color: var(--color-blue-dark); border-color: var(--color-blue); }
+
+        .player-name-input:disabled {
+            background-color: #eee;
+            opacity: 0.7;
+            cursor: not-allowed;
+        }
+
+        .score-box {
+            width: 100%;
+            padding-top: 100%;
+            position: relative;
+            border-radius: 20px;
+            box-shadow: inset 0 4px 10px rgba(0, 0, 0, 0.1);
+            transition: transform 0.2s ease-out;
+        }
+        
         #score-kiri { background-color: var(--color-red); }
         #score-kanan { background-color: var(--color-blue); }
-        .score-number { font-family: 'Orbitron', sans-serif; font-size: clamp(4rem, 15vw, 8rem); /* ... */ }
-        .score-pop { animation: pop 0.2s ease-out; }
-        @keyframes pop { 0%, 100% { transform: scale(1); } 50% { transform: scale(1.05); } }
-        .vs { font-size: clamp(2.5rem, 5vw, 4rem); /* ... */ }
-        .timer-container { margin-top: 2rem; /* ... */ }
-        .timer { background-color: var(--color-dark); font-family: 'Orbitron', sans-serif; font-size: clamp(2rem, 6vw, 4rem); /* ... */ max-width: 400px; }
-        .timer small { font-size: clamp(1rem, 3vw, 2rem); }
-        .controls { margin-top: 1.5rem; display: flex; /* ... */ }
-        .control-button { font-size: 0.9rem; /* ... */ }
-        #btn-start { background-color: #4CAF50; /* ... */ }
-        #btn-stop { background-color: #f44336; /* ... */ }
-        #btn-reset { background-color: #FFC107; /* ... */ }
-        .control-button:hover { opacity: 0.8; /* ... */ }
-        .control-button:active { transform: translateY(1px); }
-        #winner-overlay { position: fixed; /* ... */ display: none; }
-        #winner-box { background-color: white; /* ... */ }
-        #winner-box h1 { font-size: clamp(2rem, 6vw, 3rem); /* ... */ }
-        #winner-name { font-size: clamp(1.5rem, 4vw, 2rem); /* ... */ }
-        @keyframes fadeIn { from { opacity: 0; transform: scale(0.8); } to { opacity: 1; transform: scale(1); } }
+
+        .score-number {
+            position: absolute;
+            top: 0;
+            left: 0;
+            right: 0;
+            bottom: 0;
+            display: flex;
+            justify-content: center;
+            align-items: center;
+            
+            font-family: 'Orbitron', sans-serif; 
+            font-size: clamp(4rem, 15vw, 8rem); 
+            font-weight: 700;
+            color: white;
+            text-shadow: 0 4px 10px rgba(0, 0, 0, 0.2);
+        }
+        
+        .score-pop {
+            animation: pop 0.2s ease-out;
+        }
+        @keyframes pop {
+            0%, 100% { transform: scale(1); }
+            50% { transform: scale(1.05); }
+        }
+
+        .vs {
+            font-size: clamp(2.5rem, 5vw, 4rem); 
+            font-weight: 900;
+            color: #BDBDBD;
+            align-self: center;
+            flex: 0.5;
+            padding: 0 0.5rem; 
+        }
+
+        .timer-container {
+            margin-top: 2rem;
+            width: 100%;
+        }
+
+        .timer {
+            background-color: var(--color-dark);
+            color: white;
+            font-family: 'Orbitron', sans-serif;
+            font-size: clamp(2rem, 6vw, 4rem); 
+            font-weight: 700;
+            padding: 1rem 1.5rem; 
+            border-radius: 15px;
+            display: inline-block;
+            box-shadow: 0 4px 20px rgba(0, 0, 0, 0.2);
+            width: 100%;
+            max-width: 400px; 
+        }
+        .timer small {
+            font-size: clamp(1rem, 3vw, 2rem); 
+        }
+
+        .controls {
+            margin-top: 1.5rem;
+            display: flex;
+            justify-content: center;
+            gap: 0.75rem; 
+            flex-wrap: wrap;
+        }
+        
+        .control-button {
+            font-size: 0.9rem; 
+            font-weight: 700;
+            padding: 0.6rem 1.2rem; 
+            border: none;
+            border-radius: 8px;
+            cursor: pointer;
+            transition: all 0.2s ease;
+            box-shadow: 0 2px 5px rgba(0,0,0,0.1);
+        }
+        #btn-start { background-color: #4CAF50; color: white; }
+        #btn-stop { background-color: #f44336; color: white; } 
+        #btn-reset { background-color: #FFC107; color: var(--color-dark); }
+        
+        .control-button:hover {
+            opacity: 0.8;
+            transform: translateY(-2px);
+        }
+        .control-button:active {
+            transform: translateY(1px);
+        }
+       
+        #winner-overlay {
+            position: fixed;
+            top: 0;
+            left: 0;
+            width: 100%;
+            height: 100%;
+            background-color: rgba(0, 0, 0, 0.8);
+            display: none; 
+            justify-content: center;
+            align-items: center;
+            z-index: 1000;
+            backdrop-filter: blur(5px);
+        }
+
+        #winner-box {
+            background-color: white;
+            padding: 2.5rem 3rem; 
+            border-radius: 15px;
+            text-align: center;
+            box-shadow: 0 10px 30px rgba(0,0,0,0.3);
+            animation: fadeIn 0.5s ease;
+            transform: scale(0.9);
+            max-width: 90%; 
+        }
+        
+        #winner-box h1 {
+            font-size: clamp(2rem, 6vw, 3rem); 
+            margin-top: 0;
+            color: var(--color-accent);
+        }
+        #winner-name {
+            font-size: clamp(1.5rem, 4vw, 2rem); 
+            font-weight: 700;
+            margin-bottom: 1.5rem;
+        }
+
+        @keyframes fadeIn {
+            from { opacity: 0; transform: scale(0.8); }
+            to { opacity: 1; transform: scale(1); }
+        }
+
     </style>
 </head>
 <body>
@@ -106,7 +312,7 @@
         let pollIntervalId = null; 
         const INITIAL_TIME_MS_FRONTEND = 180 * 1000;
         let isSending = false; 
-        let lastDisplayedTime = INITIAL_TIME_MS_FRONTEND; // Simpan waktu terakhir yg ditampilkan
+        let lastDisplayedTime = INITIAL_TIME_MS_FRONTEND; 
 
         // --- Fungsi Kirim Request ---
         async function kirimRequest(path) {
@@ -115,7 +321,7 @@
             isSending = true;
             try {
                 // console.log('Mengirim:', path); 
-                await fetch(path); 
+                await fetch(path); // Gunakan path relatif
                 // Panggil poll lebih cepat HANYA untuk toggle/reset
                 if (path.includes('timer') || path.includes('reset')) {
                      setTimeout(pollServer, 100); 
@@ -124,23 +330,26 @@
                 console.error('Gagal kirim request:', error);
                  elTimer.innerHTML = "ERR: Send";
             } finally {
-                 setTimeout(() => { isSending = false; }, 250); 
+                 setTimeout(() => { isSending = false; }, 250); // Jeda debounce
             }
         }
         
         // --- Fungsi Update Tampilan Utama ---
         function updateDisplay(newState) {
+             // Validasi newState sebelum digunakan
              if (!newState || typeof newState.skorKiri === 'undefined' || typeof newState.remainingTime !== 'number') {
                  console.error("updateDisplay: Invalid state:", newState);
                  elTimer.innerHTML = "ERR: State"; return;
              }
              
-             // Update Skor & Animasi
+             // Update Skor & Animasi (hanya jika berubah)
              if (currentServerState.skorKiri !== newState.skorKiri) {
-                elBoxKiri.classList.add('score-pop'); setTimeout(() => elBoxKiri.classList.remove('score-pop'), 200);
+                elBoxKiri.classList.add('score-pop'); 
+                setTimeout(() => elBoxKiri.classList.remove('score-pop'), 200);
              }
              if (currentServerState.skorKanan !== newState.skorKanan) {
-                elBoxKanan.classList.add('score-pop'); setTimeout(() => elBoxKanan.classList.remove('score-pop'), 200);
+                elBoxKanan.classList.add('score-pop'); 
+                setTimeout(() => elBoxKanan.classList.remove('score-pop'), 200);
              }
              elSkorKiri.textContent = newState.skorKiri || 0; 
              elSkorKanan.textContent = newState.skorKanan || 0; 
@@ -153,33 +362,32 @@
             elNamaKanan.disabled = disableInputs;
 
             // --- Logika Tampilan Timer & Tombol ---
-            // Gunakan currentRemainingTime TERLEBIH DAHULU untuk tampilan
-            let displayTime = newState.currentRemainingTime ?? newState.remainingTime ?? 0;
-            displayTime = (typeof displayTime === 'number' && !isNaN(displayTime)) ? Math.max(0, displayTime) : 0; 
+            // Gunakan currentRemainingTime dari server jika ada, fallback ke remainingTime, terakhir 0
+            const displayTime = newState.currentRemainingTime ?? newState.remainingTime ?? 0;
+            // Pastikan displayTime adalah angka valid >= 0
+            const validDisplayTime = (typeof displayTime === 'number' && !isNaN(displayTime)) ? Math.max(0, displayTime) : 0; 
              
             if (newState.timerRunning) {
                 // Timer berjalan di server
                 // Validasi data SEBELUM memulai timer client
+                // Gunakan remainingTime (waktu tersimpan saat start/resume) untuk kalkulasi endTime
                 if (newState.lastStartTime && typeof newState.lastStartTime === 'number' && newState.lastStartTime > 0 && typeof newState.remainingTime === 'number') {
                      startClientTimer(newState.lastStartTime, newState.remainingTime); 
                 } else {
                      console.warn("Data tidak valid untuk startClientTimer:", newState);
-                     stopClientTimer(); 
-                     // Tampilkan waktu terakhir yg valid SEBELUM error
-                     elTimer.innerHTML = formatTime(lastDisplayedTime); 
+                     stopClientTimer(); // Hentikan jika data tidak valid
+                     elTimer.innerHTML = formatTime(validDisplayTime); // Tampilkan waktu statis
                 }
                 btnStart.style.display = 'none';
                 btnStop.style.display = 'inline-block'; // Tampilkan PAUSE
             } else {
                 // Timer pause/stop di server
                 stopClientTimer(); // Pastikan client timer berhenti
-                // Tampilkan waktu tersimpan (remainingTime) saat pause
-                const pausedTime = newState.remainingTime ?? 0;
-                elTimer.innerHTML = formatTime(pausedTime); 
-                lastDisplayedTime = pausedTime; // Update waktu terakhir yg valid
+                elTimer.innerHTML = formatTime(validDisplayTime); // Tampilkan waktu sisa terakhir dari server
+                lastDisplayedTime = validDisplayTime; // Simpan waktu terakhir
 
                 // Logika tombol Start/Pause
-                if (pausedTime > 0 && !newState.winnerName) {
+                if (validDisplayTime > 0 && !newState.winnerName) {
                     btnStart.style.display = 'inline-block'; // Tampilkan START
                     btnStop.style.display = 'none'; // Sembunyikan PAUSE
                 } else { // Waktu habis atau sudah ada pemenang
@@ -207,52 +415,56 @@
             } 
             // Jangan reset isWinnerShown di sini
 
-            // Simpan state terakhir
+            // Simpan state terakhir agar perbandingan di iterasi berikutnya benar
             currentServerState = newState;
         }
         
         // --- Fungsi Timer Client (Mundur) - setInterval AKURAT ---
-        let clientTimer_endTime = 0; 
+        let clientTimer_endTime = 0; // Kapan timer client seharusnya berakhir
 
         function startClientTimer(serverLastStartTime, serverRemainingTimeOnStart) {
+             // Hitung waktu akhir target berdasarkan data server TERBARU
+             // Validasi input dulu
              const initialRemaining = (typeof serverRemainingTimeOnStart === 'number' && !isNaN(serverRemainingTimeOnStart)) ? serverRemainingTimeOnStart : 0;
+             // Jika lastStartTime 0 (misalnya state rusak), anggap start dari sekarang
              const validLastStartTime = (typeof serverLastStartTime === 'number' && serverLastStartTime > 0) ? serverLastStartTime : Date.now(); 
-             const newEndTime = validLastStartTime + initialRemaining; 
+             const newEndTime = validLastStartTime + initialRemaining; // Kapan seharusnya berakhir
 
              // HANYA MULAI/RESTART jika interval belum ada ATAU target waktunya berubah signifikan
-             if (clientTimerInterval !== null && Math.abs(clientTimer_endTime - newEndTime) < 500) { 
-                  return; 
+             // Tambah toleransi sedikit (misal 100ms) agar tidak restart terus karena perbedaan kecil
+             if (clientTimerInterval !== null && Math.abs(clientTimer_endTime - newEndTime) < 100) {
+                  return; // Sudah berjalan dengan target yg cukup dekat
              }
              
              stopClientTimer(); // Hentikan interval lama jika ada
 
              clientTimer_endTime = newEndTime; // Simpan waktu akhir target
              
-             // console.log("Starting/Restarting client timer. Initial:", initialRemaining, "Target End Time:", new Date(clientTimer_endTime));
+             // console.log("Starting/Restarting client timer setInterval. Initial:", initialRemaining, "Target End Time:", new Date(clientTimer_endTime));
              
+             // Fungsi yang dijalankan interval
              const timerTick = () => {
+                 // Cek apakah timer masih relevan (jika stopClientTimer dipanggil di luar interval)
                  if (clientTimerInterval === null) return; 
                  
                  const now = Date.now();
+                 // Hitung sisa waktu berdasarkan waktu SEKARANG dan waktu AKHIR target
                  const currentRemaining = Math.max(0, clientTimer_endTime - now); 
                  
-                 // Hanya update DOM jika perlu (optimasi kecil)
-                 if(currentRemaining !== lastDisplayedTime){
-                      elTimer.innerHTML = formatTime(currentRemaining);
-                      lastDisplayedTime = currentRemaining; // Update waktu terakhir
-                 }
-
+                 elTimer.innerHTML = formatTime(currentRemaining);
+                 lastDisplayedTime = currentRemaining; // Update waktu terakhir
 
                  if (currentRemaining <= 0) {
-                      console.log("Client timer reached zero.");
-                      stopClientTimer(); 
-                      // PERBAIKAN NOTIF DELAY: Panggil pollServer SEGERA
-                      pollServer(); 
+                      // console.log("Client timer setInterval reached zero.");
+                      stopClientTimer(); // Hentikan interval
+                      // Panggil pollServer sekali lagi untuk memastikan state akhir dari server
+                      setTimeout(pollServer, 100); 
                  }
              };
              
-             timerTick(); // Panggil sekali segera
-             // Interval 100ms
+             // Panggil sekali segera agar tampilan update cepat
+             timerTick(); 
+             // Jalankan interval (100ms untuk akurasi detik yg baik)
              clientTimerInterval = setInterval(timerTick, 100); 
         }
         
@@ -261,19 +473,22 @@
                 // console.log("Stopping client timer setInterval");
                 clearInterval(clientTimerInterval); 
                 clientTimerInterval = null;
-                clientTimer_endTime = 0; 
-                // JANGAN update lastDisplayedTime di sini, biarkan updateDisplay yg handle
+                clientTimer_endTime = 0; // Reset end time ref
             }
         }
         
         // Format Waktu
         function formatTime(ms) {
+            // Pastikan ms adalah angka valid >= 0
             ms = (typeof ms === 'number' && !isNaN(ms) && ms >= 0) ? ms : 0; 
+            
             const totalDetik = Math.floor(ms / 1000);
             const menit = Math.floor(totalDetik / 60);
             const detik = totalDetik % 60;
+            // Tampilkan 2 digit milidetik
             const milidetik = ms > 0 ? Math.floor((ms % 1000) / 10) : 0; 
             const pad = (num, length = 2) => String(num).padStart(length, '0');
+            // Validasi hasil sebelum return
             if (isNaN(menit) || isNaN(detik) || isNaN(milidetik)) {
                  console.error("NaN di formatTime:", {ms, menit, detik, milidetik});
                  return "ERR"; 
@@ -305,10 +520,14 @@
                  if (newState === null || typeof newState !== 'object' || typeof newState.remainingTime !== 'number') { 
                      console.error("Invalid state data from server:", newState);
                      elTimer.innerHTML = "ERR:Data"; 
-                     currentServerState = {}; 
+                     currentServerState = {}; // Reset state lokal
                      return;
                  }
-                 newState.currentRemainingTime = newState.currentRemainingTime ?? newState.remainingTime; // Fallback
+                 // Tambahan validasi currentRemainingTime jika ada
+                 if (typeof newState.currentRemainingTime !== 'undefined' && typeof newState.currentRemainingTime !== 'number') {
+                     // Jika tidak ada/invalid, coba gunakan remainingTime saja
+                     newState.currentRemainingTime = newState.remainingTime;
+                 }
 
 
                 // Update hanya jika state BERBEDA
@@ -346,6 +565,7 @@
                   elTimer.innerHTML = formatTime(timeBeforePause); // Update tampilan SEGERA
                   lastDisplayedTime = timeBeforePause; // Simpan waktu terakhir
                   btnStop.style.display = 'none'; // Tukar tombol
+                  // Tampilkan tombol start HANYA jika waktu masih ada
                   if(timeBeforePause > 0) btnStart.style.display = 'inline-block';
              }
 
@@ -390,7 +610,7 @@
         btnCloseWinner.onclick = () => {
              // 1. Sembunyikan overlay & reset flag SEGERA
              winnerOverlay.style.display = 'none';
-             isWinnerShown = false; 
+             isWinnerShown = false; // Reset flag PENTING
              console.log("Notifikasi ditutup, isWinnerShown = false");
              
              // 2. Hentikan polling sementara & Hentikan timer client
