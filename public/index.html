@@ -131,6 +131,12 @@
         const timerEl = document.getElementById('timer-display');
 
         let gameIsOver = false;
+        
+        // ---- PERBAIKAN DIMULAI DARI SINI ----
+        
+        // Kita butuh variabel global untuk menyimpan interval milidetik
+        // agar bisa kita hentikan kapan saja.
+        let msInterval = null; 
 
         function formatWaktu(detik) {
             const menit = Math.floor(detik / 60);
@@ -138,19 +144,26 @@
             return `${menit}:${dtk < 10 ? '0' : ''}${dtk}`;
         }
 
-        function updateTimerDisplay(sisaWaktu) {
-            timerEl.innerHTML = `${formatWaktu(Math.ceil(sisaWaktu))}<span class="timer-ms">00</span>`;
+        // Fungsi ini sekarang menerima 'timerIsRunning' dari server
+        function updateTimerDisplay(sisaWaktu, timerIsRunning) {
             
-            let ms = 99;
-            const msInterval = setInterval(() => {
-                ms = (ms > 0) ? ms - 1 : 99;
-                timerEl.innerHTML = `${formatWaktu(Math.ceil(sisaWaktu))}<span class="timer-ms">${ms < 10 ? '0' : ''}${ms}</span>`;
-                
-                if (sisaWaktu <= 0) {
-                   clearInterval(msInterval);
-                   timerEl.innerHTML = `0:00<span class="timer-ms">00</span>`;
-                }
-            }, 10);
+            // 1. Selalu hentikan interval milidetik yang lama
+            if (msInterval) {
+                clearInterval(msInterval);
+                msInterval = null;
+            }
+
+            // 2. Selalu update tampilan utama (timer gede)
+            timerEl.innerHTML = `${formatWaktu(Math.ceil(sisaWaktu))}<span class="timer-ms">00</span>`;
+
+            // 3. HANYA jalankan animasi milidetik JIKA timer di server berjalan
+            if (timerIsRunning && sisaWaktu > 0) {
+                let ms = 99;
+                msInterval = setInterval(() => {
+                    ms = (ms > 0) ? ms - 1 : 99;
+                    timerEl.innerHTML = `${formatWaktu(Math.ceil(sisaWaktu))}<span class="timer-ms">${ms < 10 ? '0' : ''}${ms}</span>`;
+                }, 10);
+            }
         }
 
         function checkWinConditions(skorKiri, skorKanan, sisaWaktu) {
@@ -184,21 +197,31 @@
             try {
                 const response = await fetch(API_URL);
                 if (!response.ok) return;
+
                 const data = await response.json();
                 
                 const skorKiri = data.skorKiri || 0;
                 const skorKanan = data.skorKanan || 0;
                 const sisaWaktu = data.sisaWaktu !== undefined ? data.sisaWaktu : WAKTU_PERTANDINGAN_DETIK;
+                
+                // Ambil status timer dari server
+                const timerIsRunning = data.timerRunning || false; 
 
                 skorKiriEl.textContent = skorKiri;
                 skorKananEl.textContent = skorKanan;
-                updateTimerDisplay(sisaWaktu);
+                
+                // Kirim kedua data ke fungsi update timer
+                updateTimerDisplay(sisaWaktu, timerIsRunning);
+                
                 checkWinConditions(skorKiri, skorKanan, sisaWaktu);
                 
             } catch (error) {
                 console.error("Gagal mengambil status:", error);
             }
         }
+        
+        // ---- PERBAIKAN BERAKHIR DI SINI ----
+
         setInterval(fetchStatus, 1000);
         fetchStatus(); 
     </script>
