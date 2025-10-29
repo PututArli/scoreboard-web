@@ -394,7 +394,7 @@
             // --- Logika Pemenang ---
             // Hanya tampilkan jika ada nama pemenang DAN notifikasi belum tampil
             if (newState.winnerName && !isWinnerShown) { 
-                console.log("Pemenang terdeteksi oleh updateDisplay:", newState.winnerName);
+                console.log("Menampilkan notif pemenang:", newState.winnerName);
                 winnerName.textContent = newState.winnerName.toUpperCase();
                 winnerOverlay.style.display = 'flex';
                 isWinnerShown = true; // Set flag SEGERA
