@@ -2,8 +2,6 @@
 import { createClient } from '@vercel/kv';
 
 // Buat koneksi ke Vercel KV
-// Anda tidak perlu mengisi apapun di sini.
-// Vercel akan mengisinya otomatis saat Anda menghubungkan KV di Langkah 4.
 const kv = createClient({
   url: process.env.KV_REST_API_URL,
   token: process.env.KV_REST_API_TOKEN,
@@ -33,6 +31,7 @@ export default async function handler(request, response) {
 
     // 2. PROSES PERINTAH DARI REMOTE (Query Parameters)
     // ------------------------------------------------
+    // Perhatikan: 'timer' sekarang menangani 'toggle'
     const { score_kiri, score_kanan, reset_kiri, timer } = request.query;
 
     let gameIsOver = false;
@@ -43,7 +42,7 @@ export default async function handler(request, response) {
       gameIsOver = true;
     }
 
-    // A. Perintah RESET (Tombol ke-7 di remote)
+    // A. Perintah RESET (Tombol ke-7 di remote, TAHAN 3 DETIK)
     if (reset_kiri && reset_kiri === '1') {
       data = {
         skorKiri: 0,
@@ -56,14 +55,14 @@ export default async function handler(request, response) {
       gameIsOver = false;
     }
 
-    // B. Perintah TIMER (Tombol baru di remote Anda)
-    else if (timer) {
-      if (timer === 'start' && !data.timerRunning && data.sisaWaktu > 0 && !gameIsOver) {
-        // Mulai Timer
+    // B. Perintah TIMER (Tombol ke-7 di remote, KLIK CEPAT)
+    else if (timer && timer === 'toggle') {
+      if (!data.timerRunning && data.sisaWaktu > 0 && !gameIsOver) {
+        // --- START TIMER ---
         data.timerRunning = true;
         data.lastStartedAt = Date.now(); // Catat waktu 'sekarang'
-      } else if (timer === 'pause' && data.timerRunning) {
-        // Pause Timer
+      } else if (data.timerRunning) {
+        // --- PAUSE TIMER ---
         data.timerRunning = false;
         const waktuBerjalanDetik = Math.floor((Date.now() - data.lastStartedAt) / 1000);
         const sisaWaktuBaru = data.waktuSaatPause - waktuBerjalanDetik;
@@ -111,7 +110,6 @@ export default async function handler(request, response) {
 
     // 5. KIRIM BALASAN KE BROWSER (atau remote)
     // ------------------------------------------------
-    // Ini mengirimkan data {skorKiri, skorKanan, sisaWaktu} ke web Anda
     response.status(200).json(data);
 
   } catch (error) {
