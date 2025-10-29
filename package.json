@@ -1,7 +1,8 @@
 {
-  "name": "proteus-scoreboard-server",
+  "name": "vercel-scoreboard-server",
   "version": "1.0.0",
+  "type": "module",
   "dependencies": {
-    "@vercel/kv": "latest"
+    "@vercel/kv": "^1.0.0"
   }
 }
