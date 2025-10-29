@@ -6,7 +6,6 @@
     <title>Tatami Scoreboard</title>
     <style>
         @import url('https://fonts.googleapis.com/css2?family=Roboto+Mono:wght@700&family=Roboto:wght@700&display=swap');
-
         body {
             font-family: 'Roboto', sans-serif;
             background-color: #f0f2f5;
@@ -18,7 +17,6 @@
             margin: 0;
             overflow: hidden;
         }
-
         .title {
             background-color: #00bcd4;
             color: white;
@@ -28,7 +26,6 @@
             margin-bottom: 20px;
             box-shadow: 0 4px 10px rgba(0, 0, 0, 0.1);
         }
-
         .scoreboard-container {
             display: flex;
             align-items: center;
@@ -36,7 +33,6 @@
             gap: 50px;
             width: 100%;
         }
-
         .player-card {
             width: 350px;
             height: 400px;
@@ -47,26 +43,22 @@
             display: flex;
             flex-direction: column;
         }
-
         .player-name {
             font-size: 1.5rem;
             text-align: center;
             padding: 15px;
             border-bottom: 2px solid #eee;
         }
-
         .player-name.red {
             border: 5px solid #e74c3c;
             color: #e74c3c;
             border-radius: 10px 10px 0 0;
         }
-
         .player-name.blue {
             border: 5px solid #3498db;
             color: #3498db;
             border-radius: 10px 10px 0 0;
         }
-
         .score-display {
             flex-grow: 1;
             display: flex;
@@ -77,21 +69,17 @@
             font-family: 'Roboto Mono', monospace;
             font-weight: 700;
         }
-
         .score-display.red {
             background-color: #e74c3c;
         }
-
         .score-display.blue {
             background-color: #3498db;
         }
-
         .vs {
             font-size: 4rem;
             color: #bdc3c7;
             font-weight: 700;
         }
-
         .timer-container {
             background-color: #2c3e50;
             color: white;
@@ -104,18 +92,15 @@
             width: 250px;
             text-align: center;
         }
-        
         .timer-ms {
             font-size: 2rem;
             opacity: 0.7;
         }
-
         .controls {
             margin-top: 20px;
             display: flex;
             gap: 15px;
         }
-
         .control-button {
             padding: 12px 25px;
             font-size: 1rem;
@@ -126,7 +111,6 @@
             transition: all 0.2s ease;
             box-shadow: 0 2px 5px rgba(0, 0, 0, 0.15);
         }
-
         .start-btn {
             background-color: #2ecc71;
             color: white;
@@ -134,7 +118,6 @@
         .start-btn:hover {
             background-color: #27ae60;
         }
-
         .reset-btn {
             background-color: #f1c40f;
             color: white;
@@ -153,9 +136,7 @@
             <div class="player-name red">PEMAIN 1</div>
             <div class="score-display red" id="skor-kiri">0</div>
         </div>
-
         <div class="vs">VS</div>
-
         <div class="player-card">
             <div class="player-name blue">PEMAIN 2</div>
             <div class="score-display blue" id="skor-kanan">0</div>
@@ -170,21 +151,17 @@
     </div>
 
     <script>
-        // === KONFIGURASI ===
-        // Ganti URL ini agar sesuai dengan URL server Vercel Anda
-        const API_URL = 'https://proteus-scorekata.vercel.app/api'; 
-        const WAKTU_PERTANDINGAN_DETIK = 180; // 3 menit = 180 detik
+        const API_URL = 'https://scoreboard-web-vercel.vercel.app/api'; 
+        const WAKTU_PERTANDINGAN_DETIK = 180;
 
-        // === ELEMEN DOM ===
         const skorKiriEl = document.getElementById('skor-kiri');
         const skorKananEl = document.getElementById('skor-kanan');
         const timerEl = document.getElementById('timer-display');
         const startStopBtn = document.getElementById('start-stop-btn');
         const resetBtn = document.getElementById('reset-all-btn');
 
-        // === LOGIKA TIMER ===
         let sisaWaktu = WAKTU_PERTANDINGAN_DETIK;
-        let timerInterval = null; // Untuk menyimpan ID interval
+        let timerInterval = null;
         let timerRunning = false;
 
         function formatWaktu(detik) {
@@ -194,10 +171,7 @@
         }
 
         function updateTimerDisplay() {
-            // Tampilkan waktu utama (menit:detik)
             timerEl.innerHTML = `${formatWaktu(Math.ceil(sisaWaktu))}<span class="timer-ms">00</span>`;
-            
-            // Logika untuk milidetik (agar terlihat seperti di gambar)
             if (timerRunning) {
                 let ms = 99;
                 const msInterval = setInterval(() => {
@@ -208,20 +182,17 @@
                     }
                     ms = (ms > 0) ? ms - 1 : 99;
                     timerEl.innerHTML = `${formatWaktu(Math.ceil(sisaWaktu))}<span class="timer-ms">${ms < 10 ? '0' : ''}${ms}</span>`;
-                }, 10); // Update milidetik
+                }, 10);
             }
         }
 
         function startTimer() {
-            if (timerRunning) return; // Jangan jalankan jika sudah berjalan
+            if (timerRunning) return;
             timerRunning = true;
             startStopBtn.textContent = 'STOP';
-            
-            // Ambil waktu server (jika perlu) atau mulai saja
             timerInterval = setInterval(() => {
                 sisaWaktu -= 1;
                 updateTimerDisplay();
-
                 if (sisaWaktu <= 0) {
                     stopTimer();
                     sisaWaktu = 0;
@@ -233,7 +204,7 @@
         }
 
         function stopTimer() {
-            if (!timerRunning) return; // Jangan hentikan jika tidak berjalan
+            if (!timerRunning) return;
             timerRunning = false;
             startStopBtn.textContent = 'START';
             clearInterval(timerInterval);
@@ -246,34 +217,21 @@
             updateTimerDisplay();
         }
 
-        // === LOGIKA SKOR (POLLING) ===
-        
-        // Fungsi untuk mengambil skor dari server
         async function fetchSkor() {
             try {
-                // Bertanya ke server untuk skor terbaru
                 const response = await fetch(API_URL);
                 if (!response.ok) return;
-
                 const data = await response.json();
-                
-                // Update tampilan skor di web
-                // Ganti 'skorKiri' dan 'skorKanan' jika nama properti di JSON Anda berbeda
                 skorKiriEl.textContent = data.skorKiri || 0;
                 skorKananEl.textContent = data.skorKanan || 0;
-
             } catch (error) {
                 console.error("Gagal mengambil skor:", error);
             }
         }
 
-        // Fungsi untuk me-reset skor di server (dipanggil oleh tombol)
         async function kirimReset() {
             try {
-                // Mengirim perintah reset yang sama dengan remote ESP32
                 await fetch(`${API_URL}?reset_kiri=1&reset_kanan=1`);
-                
-                // Setelah berhasil kirim, langsung update tampilan lokal
                 skorKiriEl.textContent = '0';
                 skorKananEl.textContent = '0';
             } catch (error) {
@@ -281,10 +239,6 @@
             }
         }
 
-
-        // === EVENT LISTENERS (Tombol Web) ===
-
-        // Tombol Start/Stop
         startStopBtn.addEventListener('click', () => {
             if (timerRunning) {
                 stopTimer();
@@ -293,29 +247,14 @@
             }
         });
 
-        // Tombol Reset All
         resetBtn.addEventListener('click', () => {
-            // 1. Reset timer di halaman ini
             resetTimer();
-            
-            // 2. Kirim perintah reset skor ke server
-            // Ini adalah perintah yang sama dengan tombol ke-7 di remote Anda
             kirimReset();
         });
 
-
-        // === INISIALISASI ===
-        
-        // 1. Set tampilan timer awal
         updateTimerDisplay();
-        
-        // 2. Mulai bertanya ke server setiap 1 detik (1000 ms)
-        // Ini adalah "jantung" yang membuat web-nya update
         setInterval(fetchSkor, 1000);
-        
-        // 3. Ambil skor sekali saat halaman baru dimuat
         fetchSkor(); 
-
     </script>
 </body>
 </html>
