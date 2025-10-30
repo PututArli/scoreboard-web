@@ -131,11 +131,6 @@
         const timerEl = document.getElementById('timer-display');
 
         let gameIsOver = false;
-        
-        // ---- PERBAIKAN DIMULAI DARI SINI ----
-        
-        // Kita butuh variabel global untuk menyimpan interval milidetik
-        // agar bisa kita hentikan kapan saja.
         let msInterval = null; 
 
         function formatWaktu(detik) {
@@ -144,19 +139,12 @@
             return `${menit}:${dtk < 10 ? '0' : ''}${dtk}`;
         }
 
-        // Fungsi ini sekarang menerima 'timerIsRunning' dari server
         function updateTimerDisplay(sisaWaktu, timerIsRunning) {
-            
-            // 1. Selalu hentikan interval milidetik yang lama
             if (msInterval) {
                 clearInterval(msInterval);
                 msInterval = null;
             }
-
-            // 2. Selalu update tampilan utama (timer gede)
             timerEl.innerHTML = `${formatWaktu(Math.ceil(sisaWaktu))}<span class="timer-ms">00</span>`;
-
-            // 3. HANYA jalankan animasi milidetik JIKA timer di server berjalan
             if (timerIsRunning && sisaWaktu > 0) {
                 let ms = 99;
                 msInterval = setInterval(() => {
@@ -166,32 +154,60 @@
             }
         }
 
+        // ---- PERBAIKAN BUG 2 DIMULAI DARI SINI ----
+
+        // 1. Kita buat fungsi untuk mengirim perintah reset dari web
+        async function kirimReset() {
+            try {
+                // Mengirim perintah yang SAMA dengan tombol "Tahan 3 Detik"
+                await fetch(`${API_URL}?reset_kiri=1&reset_kanan=1`);
+                gameIsOver = false; // Set ulang status game di web
+            } catch (error) {
+                console.error("Gagal mengirim reset:", error);
+            }
+        }
+
         function checkWinConditions(skorKiri, skorKanan, sisaWaktu) {
             if (gameIsOver) {
+                // Cek apakah game di-reset (oleh remote atau oleh fungsi kirimReset)
                 if (skorKiri === 0 && skorKanan === 0 && sisaWaktu === WAKTU_PERTANDINGAN_DETIK) {
                     gameIsOver = false;
                 }
-                return;
+                return; // Jangan lakukan pengecekan jika game sudah berakhir
             }
 
             const selisih = Math.abs(skorKiri - skorKanan);
             
+            // Fitur 3: Menang jika selisih 8 poin
             if (selisih >= 8) {
                 gameIsOver = true;
                 const pemenang = (skorKiri > skorKanan) ? "PEMAIN 1" : "PEMAIN 2";
-                setTimeout(() => alert(`${pemenang} MENANG! (Selisih 8 poin)`), 100);
+                
+                // Tampilkan notifikasi
+                alert(`${pemenang} MENANG! (Selisih 8 poin)`);
+                
+                // 2. Panggil fungsi reset SETELAH user klik "OK"
+                kirimReset();
             } 
+            // Fitur 4: Notifikasi Waktu Habis
             else if (sisaWaktu <= 0) {
                 gameIsOver = true;
+                
                 if (skorKiri > skorKanan) {
-                    setTimeout(() => alert("Waktu Habis! PEMAIN 1 MENANG!"), 100);
+                    alert("Waktu Habis! PEMAIN 1 MENANG!");
                 } else if (skorKanan > skorKiri) {
-                    setTimeout(() => alert("Waktu Habis! PEMAIN 2 MENANG!"), 100);
+                    alert("Waktu Habis! PEMAIN 2 MENANG!");
                 } else {
-                    setTimeout(() => alert("Waktu Habis! Hasilnya SERI!"), 100);
+                    alert("Waktu Habis! Hasilnya SERI!");
                 }
+                
+                // 2. Panggil fungsi reset SETELAH user klik "OK"
+                kirimReset();
             }
         }
+        
+        // ---- PERBAIKAN BUG 2 BERAKHIR DI SINI ----
+
 
         async function fetchStatus() {
             try {
@@ -203,24 +219,17 @@
                 const skorKiri = data.skorKiri || 0;
                 const skorKanan = data.skorKanan || 0;
                 const sisaWaktu = data.sisaWaktu !== undefined ? data.sisaWaktu : WAKTU_PERTANDINGAN_DETIK;
-                
-                // Ambil status timer dari server
                 const timerIsRunning = data.timerRunning || false; 
 
                 skorKiriEl.textContent = skorKiri;
                 skorKananEl.textContent = skorKanan;
-                
-                // Kirim kedua data ke fungsi update timer
                 updateTimerDisplay(sisaWaktu, timerIsRunning);
-                
                 checkWinConditions(skorKiri, skorKanan, sisaWaktu);
                 
             } catch (error) {
                 console.error("Gagal mengambil status:", error);
             }
         }
-        
-        // ---- PERBAIKAN BERAKHIR DI SINI ----
 
         setInterval(fetchStatus, 1000);
         fetchStatus(); 
