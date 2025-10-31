@@ -4,8 +4,20 @@
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <title>Tatami Scoreboard</title>
+    
+    <link rel="icon" href="/favicon.ico" type="image/x-icon">
+    <link rel="icon" type="image/png" sizes="32x32" href="/favicon-32x32.png">
+
     <style>
-        @import url('https://fonts.googleapis.com/css2?family=Roboto+Mono:wght@700&family=Roboto:wght@700&display=swap');
+        /* --- Gaya Font Retro Kustom Anda --- */
+        @font-face {
+            font-family: 'RetroFont'; /* Kita beri nama 'RetroFont' */
+            /* Pastikan file ini ada di /public/fonts/04B_30___.ttf */
+            src: url('/fonts/04B_30___.ttf') format('truetype');
+            font-weight: normal;
+            font-style: normal;
+        }
+
         body {
             font-family: 'Roboto', sans-serif;
             background-color: #f0f2f5;
@@ -68,6 +80,7 @@
             color: white;
             font-family: 'Roboto Mono', monospace;
             font-weight: 700;
+            transition: transform 0.15s ease-out; /* Animasi "pop" */
         }
         .score-display.red {
             background-color: #e74c3c;
@@ -75,6 +88,11 @@
         .score-display.blue {
             background-color: #3498db;
         }
+        /* Kelas animasi "pop" saat skor berubah */
+        .score-display.animate-pop {
+            transform: scale(1.1);
+        }
+        
         .vs {
             font-size: 4rem;
             color: #bdc3c7;
@@ -97,7 +115,63 @@
             opacity: 0.7;
         }
         .controls {
-            display: none;
+            display: none; /* Tombol web disembunyikan */
+        }
+
+        /* --- Gaya Overlay Game End --- */
+        .game-overlay {
+            position: fixed;
+            top: 0;
+            left: 0;
+            width: 100%;
+            height: 100%;
+            background-color: rgba(0, 0, 0, 0.8);
+            display: flex;
+            flex-direction: column;
+            align-items: center;
+            justify-content: center;
+            z-index: 1000;
+            opacity: 0;
+            visibility: hidden;
+            transition: opacity 0.3s ease-in-out, visibility 0.3s ease-in-out;
+        }
+
+        .game-overlay.active {
+            opacity: 1;
+            visibility: visible;
+        }
+
+        .game-message {
+            font-family: 'RetroFont', 'Roboto Mono', monospace; /* Gunakan font retro */
+            font-size: 4rem;
+            color: yellow;
+            text-align: center;
+            margin-bottom: 30px;
+            text-shadow: 4px 4px #000;
+            animation: text-pop 0.5s ease-out;
+        }
+
+        .reset-button {
+            font-family: 'RetroFont', 'Roboto Mono', monospace;
+            font-size: 1.5rem;
+            padding: 15px 30px;
+            background-color: #00bcd4;
+            color: white;
+            border: none;
+            border-radius: 5px;
+            cursor: pointer;
+            box-shadow: 0 4px 10px rgba(0, 0, 0, 0.3);
+            transition: background-color 0.3s ease;
+        }
+
+        .reset-button:hover {
+            background-color: #0097a7;
+        }
+
+        @keyframes text-pop {
+            0% { transform: scale(0.5); opacity: 0; }
+            80% { transform: scale(1.1); opacity: 1; }
+            100% { transform: scale(1); opacity: 1; }
         }
     </style>
 </head>
@@ -119,6 +193,11 @@
 
     <div class="timer-container" id="timer-display">3:00<span class="timer-ms">00</span></div>
 
+    <div id="game-end-overlay" class="game-overlay">
+        <div id="game-end-message" class="game-message"></div>
+        <button id="reset-button" class="reset-button">RESET</button>
+    </div>
+
     <div class="controls">
     </div>
 
@@ -129,9 +208,14 @@
         const skorKiriEl = document.getElementById('skor-kiri');
         const skorKananEl = document.getElementById('skor-kanan');
         const timerEl = document.getElementById('timer-display');
+        const gameEndOverlay = document.getElementById('game-end-overlay');
+        const gameEndMessage = document.getElementById('game-end-message');
+        const resetButton = document.getElementById('reset-button');
 
         let gameIsOver = false;
         let msInterval = null; 
+        let prevSkorKiri = 0; // Untuk animasi pop angka
+        let prevSkorKanan = 0; // Untuk animasi pop angka
 
         function formatWaktu(detik) {
             const menit = Math.floor(detik / 60);
@@ -154,61 +238,56 @@
             }
         }
 
-        // ---- PERBAIKAN BUG 2 DIMULAI DARI SINI ----
-
-        // 1. Kita buat fungsi untuk mengirim perintah reset dari web
         async function kirimReset() {
             try {
-                // Mengirim perintah yang SAMA dengan tombol "Tahan 3 Detik"
                 await fetch(`${API_URL}?reset_kiri=1&reset_kanan=1`);
-                gameIsOver = false; // Set ulang status game di web
+                gameIsOver = false;
+                gameEndOverlay.classList.remove('active');
             } catch (error) {
                 console.error("Gagal mengirim reset:", error);
             }
         }
 
+        resetButton.addEventListener('click', () => {
+            kirimReset();
+        });
+
         function checkWinConditions(skorKiri, skorKanan, sisaWaktu) {
             if (gameIsOver) {
-                // Cek apakah game di-reset (oleh remote atau oleh fungsi kirimReset)
                 if (skorKiri === 0 && skorKanan === 0 && sisaWaktu === WAKTU_PERTANDINGAN_DETIK) {
                     gameIsOver = false;
+                    gameEndOverlay.classList.remove('active');
                 }
-                return; // Jangan lakukan pengecekan jika game sudah berakhir
+                return;
             }
 
             const selisih = Math.abs(skorKiri - skorKanan);
-            
-            // Fitur 3: Menang jika selisih 8 poin
+            let message = '';
+            let gameEnded = false; 
+
             if (selisih >= 8) {
-                gameIsOver = true;
                 const pemenang = (skorKiri > skorKanan) ? "PEMAIN 1" : "PEMAIN 2";
-                
-                // Tampilkan notifikasi
-                alert(`${pemenang} MENANG! (Selisih 8 poin)`);
-                
-                // 2. Panggil fungsi reset SETELAH user klik "OK"
-                kirimReset();
+                message = `${pemenang} MENANG!`;
+                gameEnded = true;
             } 
-            // Fitur 4: Notifikasi Waktu Habis
             else if (sisaWaktu <= 0) {
-                gameIsOver = true;
-                
                 if (skorKiri > skorKanan) {
-                    alert("Waktu Habis! PEMAIN 1 MENANG!");
+                    message = "Waktu Habis! PEMAIN 1 MENANG!";
                 } else if (skorKanan > skorKiri) {
-                    alert("Waktu Habis! PEMAIN 2 MENANG!");
+                    message = "Waktu Habis! PEMAIN 2 MENANG!";
                 } else {
-                    alert("Waktu Habis! Hasilnya SERI!");
+                    message = "Waktu Habis! Hasilnya SERI!";
                 }
-                
-                // 2. Panggil fungsi reset SETELAH user klik "OK"
-                kirimReset();
+                gameEnded = true;
+            }
+
+            if (gameEnded) {
+                gameIsOver = true;
+                gameEndMessage.textContent = message;
+                gameEndOverlay.classList.add('active');
             }
         }
         
-        // ---- PERBAIKAN BUG 2 BERAKHIR DI SINI ----
-
-
         async function fetchStatus() {
             try {
                 const response = await fetch(API_URL);
@@ -220,6 +299,23 @@
                 const skorKanan = data.skorKanan || 0;
                 const sisaWaktu = data.sisaWaktu !== undefined ? data.sisaWaktu : WAKTU_PERTANDINGAN_DETIK;
                 const timerIsRunning = data.timerRunning || false; 
+
+                // --- Logika Animasi Skor "Pop" ---
+                if (skorKiri !== prevSkorKiri) {
+                    skorKiriEl.classList.add('animate-pop');
+                    setTimeout(() => {
+                        skorKiriEl.classList.remove('animate-pop');
+                    }, 200); 
+                }
+                if (skorKanan !== prevSkorKanan) {
+                    skorKananEl.classList.add('animate-pop');
+                    setTimeout(() => {
+                        skorKananEl.classList.remove('animate-pop');
+                    }, 200); 
+                }
+                prevSkorKiri = skorKiri; 
+                prevSkorKanan = skorKanan;
+                // --- Akhir Logika "Pop" ---
 
                 skorKiriEl.textContent = skorKiri;
                 skorKananEl.textContent = skorKanan;
